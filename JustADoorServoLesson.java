@@ -250,7 +250,7 @@ public class MyFIRSTJavaOpMode extends LinearOpMode {
   }
 
   /**
-   * Method to drive the robot forward by a specified number of centimeters
+   * Method to drive the robot sideways by a specified number of centimeters
    * 
    * @param distance Distance in cm of how far we want the robot to drive
    */
