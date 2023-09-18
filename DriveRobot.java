@@ -18,8 +18,8 @@ Robot motor layout:
 
 Motor1 --- Motor2
 
-  |          |
-  |          |
+  |    ^     |
+  |    |     |
 
 Motor3 --- Motor4
 
@@ -31,7 +31,7 @@ Fwd --- Fwd
   |      |
   |      |
 
-Rev --- Rev
+Fwd --- Fwd
 
 Drive Sideways:
 
