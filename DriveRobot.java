@@ -18,8 +18,8 @@ Robot motor layout:
 
 Motor1 --- Motor2
 
-  |    ^     |
-  |    |     |
+  |     ^    |
+  |     |    |
 
 Motor3 --- Motor4
 
