@@ -40,7 +40,7 @@ Fwd --- Fwd
   |      |
   |      |
 
-Rev --- Rev
+Fwd --- Fwd
 
 Drive Sideways:
 
