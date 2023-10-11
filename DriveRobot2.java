@@ -35,14 +35,10 @@ public class DriveRobot extends LinearOpMode
     private DcMotor    motorTest   = null;
     private boolean    isLiftMoving = false;
     
-        /**
+    /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
      */
     private TfodProcessor tfod;
-
-    /**
-     * The variable to store our instance of the vision portal.
-     */
     private VisionPortal visionPortal;
     IMU imu;
     int logoFacingDirectionPosition;
@@ -132,12 +128,8 @@ public class DriveRobot extends LinearOpMode
             telemetry.addData("motor4", motor4Power/scale);
             
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-            //AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
-            /*telemetry.addData("driveInput", driveInput);
-            telemetry.addData("sideInput",  sideInput);
-            telemetry.addData("turnInput",  turnInput); */
 
             telemetryTfod();
             telemetry.update();
@@ -158,27 +150,22 @@ public class DriveRobot extends LinearOpMode
                     turn(15);
                 }
             }
-
-            if(gamepad1.dpad_up) {
+            
+            if(gamepad1.dpad_up && launcher.getPosition() == 1){
                 launchDrone();
-            }
-            if(gamepad1.dpad_down) {
+            }else if(gamepad1.dpad_up){
                 loadDrone();
             }
-
-            if(gamepad1.a) {
+            
+            if(gamepad1.a && claw.getPosition() == 0){
                 grab();
-            }
-
-            if(gamepad1.b) {
+            }else if(gamepad1.a){
                 release();
             }
 
-            if(gamepad1.x) {
+            if(gamepad1.x && arm.getPosition() == 0){
                 armUp();
-            }
-
-            if(gamepad1.y) {
+            }else if(gamepad1.x){
                 armDown();
             }
 
@@ -199,7 +186,27 @@ public class DriveRobot extends LinearOpMode
                 drive(2);
             }
 
+            if(gamepad1.a) {
+                turntopixel();
+            }
         }
+    }
+    
+    void turntopixel() {
+        motor1.setPower(-0.5);
+        motor2.setPower(0.5);
+        motor3.setPower(-0.5);
+        motor4.setPower(0.5);
+
+        while(true){
+         List<Recognition> currentRecognitions = tfod.getRecognitions();
+         if(currentRecognitions.size()>0)break;
+        }
+
+        motor1.setPower(0);
+        motor2.setPower(0);
+        motor3.setPower(0);
+        motor4.setPower(0);
     }
 
     void grab() {
@@ -211,11 +218,11 @@ public class DriveRobot extends LinearOpMode
     }
 
     void armUp() {
-        arm.setPosition(1);
+        arm.setPosition(0);
     }
 
     void armDown() {
-        arm.setPosition(0);
+        arm.setPosition(1);
     }
 
     void turn(int angle) {
@@ -413,6 +420,5 @@ public class DriveRobot extends LinearOpMode
             orientationIsValid = false;
         }
     }
-
 
 }
