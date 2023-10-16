@@ -31,9 +31,10 @@ public class DriveRobot extends LinearOpMode
     private Servo      launcher = null;
     private Servo      claw     = null;
     private Servo      arm      = null;
-    private DcMotor    lift     = null;
+   private DcMotor    lift     = null;
     private DcMotor    motorTest   = null;
     private boolean    isLiftMoving = false;
+    private ColorSensor colorSensor = null;
     
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
@@ -66,8 +67,9 @@ public class DriveRobot extends LinearOpMode
         launcher = hardwareMap.get(Servo.class, "launcher");
         claw    = hardwareMap.get(Servo.class, "claw");
         arm     = hardwareMap.get(Servo.class, "arm");
-        lift    = hardwareMap.get(DcMotor.class, "lift");
-        
+       // lift    = hardwareMap.get(DcMotor.class, "lift");
+        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+
         motor1.setDirection(DcMotor.Direction.REVERSE);
         motor2.setDirection(DcMotor.Direction.FORWARD);
         motor3.setDirection(DcMotor.Direction.REVERSE);
@@ -126,7 +128,8 @@ public class DriveRobot extends LinearOpMode
             telemetry.addData("motor2", motor2Power/scale);
             telemetry.addData("motor3", motor3Power/scale);
             telemetry.addData("motor4", motor4Power/scale);
-            
+            telemetry.addData("colorSensor", "r:"+ colorSensor.red() +" g:"+ colorSensor.green() +" b:"+ colorSensor.blue());
+
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
@@ -187,12 +190,29 @@ public class DriveRobot extends LinearOpMode
             }
 
             if(gamepad1.a) {
-                turntopixel();
+                turnToPixel();
             }
+            
+           /* if(gamepad1.y) {
+                turnToColor();
+                
+            } */
+            
+         if(gamepad1.y) {
+             drive(0.5);
+             turn(90);
+             drive(0.5);
+             turn(90);
+             drive(0.5);
+             turn(90);
+             drive(0.5);
+             turn(90);
+        } 
         }
+        
     }
     
-    void turntopixel() {
+    void turnToPixel() {
         motor1.setPower(-0.5);
         motor2.setPower(0.5);
         motor3.setPower(-0.5);
@@ -201,6 +221,23 @@ public class DriveRobot extends LinearOpMode
         while(true){
          List<Recognition> currentRecognitions = tfod.getRecognitions();
          if(currentRecognitions.size()>0)break;
+         sleep(50);
+        }
+
+        motor1.setPower(0);
+        motor2.setPower(0);
+        motor3.setPower(0);
+        motor4.setPower(0);
+    }
+    
+     void turnToColor() {
+        motor1.setPower(-0.5);
+        motor2.setPower(0.5);
+        motor3.setPower(-0.5);
+        motor4.setPower(0.5);
+
+        while(!(colorSensor.blue()>=250&&colorSensor.red()>=250&&colorSensor.green()>=250)){
+         sleep(50);
         }
 
         motor1.setPower(0);
