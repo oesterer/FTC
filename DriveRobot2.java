@@ -192,12 +192,19 @@ public class DriveRobot extends LinearOpMode
             if(gamepad1.a) {
                 turnToPixel();
             }
+
+            if(gamepad1.y) {
+                auto();
+            }
+
+
+
             
            /* if(gamepad1.y) {
                 turnToColor();
                 
             } */
-            
+         /*   
          if(gamepad1.y) {
              drive(0.5);
              turn(90);
@@ -207,7 +214,7 @@ public class DriveRobot extends LinearOpMode
              turn(90);
              drive(0.5);
              turn(90);
-        } 
+        } */
         }
         
     }
@@ -344,6 +351,40 @@ public class DriveRobot extends LinearOpMode
         motor4.setPower(0);
     }
 
+    boolean isWhite() {
+        return(colorSensor.blue()>=150 &&
+               colorSensor.red()>=150 &&
+               colorSensor.green()>=150);
+    }
+
+    boolean driveToWhite(double distance) {
+        int direction=0;
+        if(distance<0) {
+            direction=-1;
+        } else {
+            direction=1;
+        }
+        motor1.setPower(0.5*direction);
+        motor2.setPower(0.5*direction);
+        motor3.setPower(0.5*direction);
+        motor4.setPower(0.5*direction); 
+
+        long maxTime=distanceToTime(distance);
+        long elapsedTime=0;
+        while(elapsedTime<=maxTime &&
+              !isWhite()) {
+            sleep(50);
+            elapsedTime=elapsedTime+50;
+        }
+        
+        motor1.setPower(0);
+        motor2.setPower(0);
+        motor3.setPower(0);
+        motor4.setPower(0);
+
+        return(isWhite());
+    }
+
     void strafe(double distance) {
         int direction=0;
         if(distance<0) {
@@ -364,8 +405,35 @@ public class DriveRobot extends LinearOpMode
     }   
 
     long distanceToTime(double distance) {
-        return((long)(distance*1000));
+        return((long)(Math.abs(distance)*1000));
     } 
+
+    void auto() {
+        boolean detectedWhite=false;
+
+        strafe(-0.5);
+        detectedWhite=driveToWhite(0.5);
+        if(detectedWhite) {
+            armDown();
+            release();
+        } else {
+             turn(90);
+             detectedWhite=driveToWhite(0.5);
+             if(detectedWhite){
+                armDown();
+                release();
+             } else {
+                turn(90);
+                detectedWhite=driveToWhite(0.5);
+                if(detectedWhite){
+                armDown();
+                release();
+                }  
+             }
+        }
+        
+    }
+
 
     /**
      * Initialize the TensorFlow Object Detection processor.
