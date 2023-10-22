@@ -39,7 +39,6 @@ public class DriveRobot extends LinearOpMode
     private boolean clawClosed=false;
     private ColorSensor colorSensor = null;
   
-
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
      */
@@ -131,13 +130,12 @@ public class DriveRobot extends LinearOpMode
             motor3.setPower(motor3Power/scale);
             motor4.setPower(motor4Power/scale);
 
-            telemetry.addData("motor1", (motor1Power/scale)*100);
-            telemetry.addData("motor2", (motor2Power/scale)*100);
-            telemetry.addData("motor3", (motor3Power/scale)*100);
-            telemetry.addData("motor4", (motor4Power/scale)*100);
+            telemetry.addData("motor1", motor1Power/scale);
+            telemetry.addData("motor2", motor2Power/scale);
+            telemetry.addData("motor3", motor3Power/scale);
+            telemetry.addData("motor4", motor4Power/scale);
             
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-            //AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
             //telemetry.addData("driveInput", driveInput);
@@ -145,10 +143,6 @@ public class DriveRobot extends LinearOpMode
             //telemetry.addData("turnInput",  turnInput);
             //telemetry.addData("Plane Launched", isPlaneLaunched);
             telemetry.addData("colorSensor", "r:"+ colorSensor.red() +" g:"+ colorSensor.green() +" b:"+ colorSensor.blue());
-
-            telemetryTfod();
-            telemetry.update();
-            sleep(10);
 
             if(gamepad1.dpad_right) {
                 if(gamepad1.right_bumper) {
@@ -168,17 +162,21 @@ public class DriveRobot extends LinearOpMode
 
             if(gamepad1.dpad_up && launcher.getPosition() == 1){
                 launchDrone();
-            }else if(gamepad1.dpad_up){
+                telemetry.addData("Action", "Launch Drone");
+            } else if(gamepad1.dpad_up){
                 loadDrone();
+                telemetry.addData("Action", "Load Drone");
             }
             
             if(gamepad1.b) {
                 if(clawClosed) {
                     release();
                     clawClosed=false;
+                    telemetry.addData("Action", "Release Claw");
                 } else {
                     grab();
                     clawClosed=true;
+                    telemetry.addData("Action", "Close Claw");
                 }
                 sleep(500);
             }
@@ -187,35 +185,46 @@ public class DriveRobot extends LinearOpMode
                 if(armUp) {
                     armDown();
                     armUp=false;
+                    telemetry.addData("Action", "Arm Down");
                 } else {
                     armUp();
                     armUp=true;
+                    telemetry.addData("Action", "Arm Up");
                 }
                 sleep(500);
             }
             
+            if(gamepad1.x) {
+                armHalfway();
+                telemetry.addData("Action", "Arm Halfway");
+            }
+
             if(gamepad1.a && gamepad1.x) {
                 drive(0.1,0.5);
                 strafe(2.5,0.6);
-            }
-            
-            if(gamepad1.x) {
-                armHalfway();
+                telemetry.addData("Action", "Auto");
             }
 
             if(gamepad1.right_trigger>0.1) {
                 extendLift();
+                telemetry.addData("Action", "Lift Extend");
             }
+
             if(gamepad1.left_trigger>0.1) {
                 contractLift();
+                telemetry.addData("Action", "Lift Contract");
             }
 
             if(isLiftMoving &&    
                gamepad1.left_trigger<=0.1 &&
                gamepad1.right_trigger<=0.1) {
-                stopLift();
+               stopLift();
+               telemetry.addData("Action", "Lift Stop");
             }
 
+            telemetryTfod();
+            telemetry.update();
+            sleep(10);
         }
     }
 
