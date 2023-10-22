@@ -31,15 +31,23 @@ public class DriveRobot extends LinearOpMode
     private Servo      launcher = null;
     private Servo      claw     = null;
     private Servo      arm      = null;
-   private DcMotor    lift     = null;
+    private DcMotor    lift     = null;
     private DcMotor    motorTest   = null;
     private boolean    isLiftMoving = false;
+    private boolean     isPlaneLaunched = false;  
+    private boolean armUp=false;
+    private boolean clawClosed=false;
     private ColorSensor colorSensor = null;
-    
+  
+
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
      */
     private TfodProcessor tfod;
+
+    /**
+     * The variable to store our instance of the vision portal.
+     */
     private VisionPortal visionPortal;
     IMU imu;
     int logoFacingDirectionPosition;
@@ -56,7 +64,6 @@ public class DriveRobot extends LinearOpMode
         usbFacingDirectionPosition = 2; // Forward
 
         updateOrientation();
-
         
         initTfod();
         
@@ -67,9 +74,9 @@ public class DriveRobot extends LinearOpMode
         launcher = hardwareMap.get(Servo.class, "launcher");
         claw    = hardwareMap.get(Servo.class, "claw");
         arm     = hardwareMap.get(Servo.class, "arm");
-       // lift    = hardwareMap.get(DcMotor.class, "lift");
+        lift    = hardwareMap.get(DcMotor.class, "lift");
         colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
-
+        
         motor1.setDirection(DcMotor.Direction.REVERSE);
         motor2.setDirection(DcMotor.Direction.FORWARD);
         motor3.setDirection(DcMotor.Direction.REVERSE);
@@ -110,7 +117,7 @@ public class DriveRobot extends LinearOpMode
                           -sideScale*sideInput
                           -turnScale*turnInput;
             double scale = 3;
-            if (gamepad1.right_bumper) {
+            if (!gamepad1.right_bumper) {
                 scale = 1.0;
             }
             
@@ -124,15 +131,20 @@ public class DriveRobot extends LinearOpMode
             motor3.setPower(motor3Power/scale);
             motor4.setPower(motor4Power/scale);
 
-            telemetry.addData("motor1", motor1Power/scale);
-            telemetry.addData("motor2", motor2Power/scale);
-            telemetry.addData("motor3", motor3Power/scale);
-            telemetry.addData("motor4", motor4Power/scale);
-            telemetry.addData("colorSensor", "r:"+ colorSensor.red() +" g:"+ colorSensor.green() +" b:"+ colorSensor.blue());
-
+            telemetry.addData("motor1", (motor1Power/scale)*100);
+            telemetry.addData("motor2", (motor2Power/scale)*100);
+            telemetry.addData("motor3", (motor3Power/scale)*100);
+            telemetry.addData("motor4", (motor4Power/scale)*100);
+            
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+            //AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
+            //telemetry.addData("driveInput", driveInput);
+            //telemetry.addData("sideInput",  sideInput);
+            //telemetry.addData("turnInput",  turnInput);
+            //telemetry.addData("Plane Launched", isPlaneLaunched);
+            telemetry.addData("colorSensor", "r:"+ colorSensor.red() +" g:"+ colorSensor.green() +" b:"+ colorSensor.blue());
 
             telemetryTfod();
             telemetry.update();
@@ -140,36 +152,66 @@ public class DriveRobot extends LinearOpMode
 
             if(gamepad1.dpad_right) {
                 if(gamepad1.right_bumper) {
-                    turn(-90);
-                } else {
                     turn(-15);
+                } else {
+                    turn(-90);
                 }
             }
 
             if(gamepad1.dpad_left) {
                 if(gamepad1.right_bumper) {
-                    turn(90);
-                } else {
                     turn(15);
+                } else {
+                    turn(90);
                 }
             }
-            
-            if(gamepad1.dpad_up && launcher.getPosition() == 1){
+
+            if(gamepad1.dpad_up) {
                 launchDrone();
-            }else if(gamepad1.dpad_up){
+            } else {
+                loadDrone();
+            }
+
+        
+            if(gamepad1.dpad_up && launcher.getPosition() == 1){
+                if (gamepad1.right_bumper) {
+                    launchDrone();
+                }
+            } else {
                 loadDrone();
             }
             
-            if(gamepad1.a && claw.getPosition() == 0){
-                grab();
-            }else if(gamepad1.a){
-                release();
+
+            if(gamepad1.b) {
+                if(clawClosed) {
+                    release();
+                    clawClosed=false;
+                } else {
+                    grab();
+                    clawClosed=true;
+                }
+                sleep(500);
             }
 
-            if(gamepad1.x && arm.getPosition() == 0){
-                armUp();
-            }else if(gamepad1.x){
-                armDown();
+            if(gamepad1.y) {
+                if(armUp) {
+                    armDown();
+                    armUp=false;
+                } else {
+                    armUp();
+                    armUp=true;
+                }
+                sleep(500);
+            }
+            
+            
+            if(gamepad1.a && gamepad1.x) {
+                drive(0.1,0.5);
+                strafe(2.5,0.6);
+            }
+            
+            if(gamepad1.x) {
+                armHalfway();
             }
 
             if(gamepad1.right_trigger>0.1) {
@@ -185,88 +227,47 @@ public class DriveRobot extends LinearOpMode
                 stopLift();
             }
 
-            if(gamepad1.left_bumper) {
-                drive(2);
-            }
-
-            if(gamepad1.a) {
-                turnToPixel();
-            }
-
-            if(gamepad1.y) {
-                auto();
-            }
-
-
-
-            
-           /* if(gamepad1.y) {
-                turnToColor();
-                
-            } */
-         /*   
-         if(gamepad1.y) {
-             drive(0.5);
-             turn(90);
-             drive(0.5);
-             turn(90);
-             drive(0.5);
-             turn(90);
-             drive(0.5);
-             turn(90);
-        } */
         }
-        
     }
-    
-    void turnToPixel() {
-        motor1.setPower(-0.5);
-        motor2.setPower(0.5);
-        motor3.setPower(-0.5);
-        motor4.setPower(0.5);
 
+
+    void turntopixel() {
+        motor1.setPower(-0.25);
+        motor2.setPower(0.25);
+        motor3.setPower(-0.25);
+        motor4.setPower(0.25);
         while(true){
          List<Recognition> currentRecognitions = tfod.getRecognitions();
+
          if(currentRecognitions.size()>0)break;
-         sleep(50);
+        
         }
 
-        motor1.setPower(0);
-        motor2.setPower(0);
-        motor3.setPower(0);
-        motor4.setPower(0);
-    }
-    
-     void turnToColor() {
-        motor1.setPower(-0.5);
-        motor2.setPower(0.5);
-        motor3.setPower(-0.5);
-        motor4.setPower(0.5);
+         motor1.setPower(0);
+         motor2.setPower(0);
+         motor3.setPower(0);
+         motor4.setPower(0);
 
-        while(!(colorSensor.blue()>=250&&colorSensor.red()>=250&&colorSensor.green()>=250)){
-         sleep(50);
-        }
-
-        motor1.setPower(0);
-        motor2.setPower(0);
-        motor3.setPower(0);
-        motor4.setPower(0);
     }
 
     void grab() {
-        claw.setPosition(1);
+        claw.setPosition(0.75);
     }
 
     void release() {
-        claw.setPosition(0);
+        claw.setPosition(0.4);
     }
 
     void armUp() {
-        arm.setPosition(0);
+        arm.setPosition(0.35);
     }
 
     void armDown() {
         arm.setPosition(1);
+    }
+
+    void armHalfway() {
+        arm.setPosition(0.85);
     }
 
     void turn(int angle) {
@@ -303,7 +304,6 @@ public class DriveRobot extends LinearOpMode
         return((remainingAngle+10)/100);
     }
 
-
     double getAngle() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
         return(orientation.getYaw(AngleUnit.DEGREES));
@@ -315,15 +315,17 @@ public class DriveRobot extends LinearOpMode
 
     void launchDrone() {
         launcher.setPosition(0);
+        isPlaneLaunched = true;
+        sleep(1000);
     }
 
     void extendLift() {
-        lift.setPower(.5);
+        lift.setPower(.85);
         isLiftMoving = true; 
     }
 
     void contractLift() {
-        lift.setPower(-.5);
+        lift.setPower(-.85);
         isLiftMoving = true; 
     }
 
@@ -332,7 +334,7 @@ public class DriveRobot extends LinearOpMode
         isLiftMoving = false;
     }
 
-    void drive(double distance) {
+    void drive(double distance, double speed) {
         int direction=0;
         if(distance<0) {
             direction=-1;
@@ -340,16 +342,39 @@ public class DriveRobot extends LinearOpMode
             direction=1;
         }
 
-        motor1.setPower(1*direction);
-        motor2.setPower(1*direction);
-        motor3.setPower(1*direction);
-        motor4.setPower(1*direction); 
+        motor1.setPower(speed*direction);
+        motor2.setPower(speed*direction);
+        motor3.setPower(speed*direction);
+        motor4.setPower(speed*direction); 
         sleep(distanceToTime(distance));
         motor1.setPower(0);
         motor2.setPower(0);
         motor3.setPower(0);
         motor4.setPower(0);
     }
+
+    void strafe(double distance, double speed) {
+        int direction=0;
+        if(distance<0) {
+            direction=-1;
+        } else {
+            direction=1;
+        }
+
+        motor1.setPower(speed*direction);
+        motor2.setPower(speed*direction);
+        motor3.setPower(-1*speed*direction);
+        motor4.setPower(-1*speed*direction); 
+        sleep(distanceToTime(distance));
+        motor1.setPower(0);
+        motor2.setPower(0);
+        motor3.setPower(0);
+        motor4.setPower(0);
+    }   
+
+    long distanceToTime(double distance) {
+        return((long)(Math.abs(distance)*1000));
+    } 
 
     boolean isWhite() {
         return(colorSensor.blue()>=150 &&
@@ -385,29 +410,6 @@ public class DriveRobot extends LinearOpMode
         return(isWhite());
     }
 
-    void strafe(double distance) {
-        int direction=0;
-        if(distance<0) {
-            direction=-1;
-        } else {
-            direction=1;
-        }
-
-        motor1.setPower(1*direction);
-        motor2.setPower(1*direction);
-        motor3.setPower(-1*direction);
-        motor4.setPower(-1*direction); 
-        sleep(distanceToTime(distance));
-        motor1.setPower(0);
-        motor2.setPower(0);
-        motor3.setPower(0);
-        motor4.setPower(0);
-    }   
-
-    long distanceToTime(double distance) {
-        return((long)(Math.abs(distance)*1000));
-    } 
-
     void auto() {
         boolean detectedWhite=false;
 
@@ -431,9 +433,7 @@ public class DriveRobot extends LinearOpMode
                 }  
              }
         }
-        
     }
-
 
     /**
      * Initialize the TensorFlow Object Detection processor.
