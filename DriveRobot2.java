@@ -166,22 +166,12 @@ public class DriveRobot extends LinearOpMode
                 }
             }
 
-            if(gamepad1.dpad_up) {
-                launchDrone();
-            } else {
-                loadDrone();
-            }
-
-        
             if(gamepad1.dpad_up && launcher.getPosition() == 1){
-                if (gamepad1.right_bumper) {
-                    launchDrone();
-                }
-            } else {
+                launchDrone();
+            }else if(gamepad1.dpad_up){
                 loadDrone();
             }
             
-
             if(gamepad1.b) {
                 if(clawClosed) {
                     release();
@@ -203,7 +193,6 @@ public class DriveRobot extends LinearOpMode
                 }
                 sleep(500);
             }
-            
             
             if(gamepad1.a && gamepad1.x) {
                 drive(0.1,0.5);
@@ -229,7 +218,6 @@ public class DriveRobot extends LinearOpMode
 
         }
     }
-
 
     void turntopixel() {
         motor1.setPower(-0.25);
