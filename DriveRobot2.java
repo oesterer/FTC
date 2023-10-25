@@ -38,6 +38,8 @@ public class DriveRobot extends LinearOpMode
     private boolean armUp=false;
     private boolean clawClosed=false;
     private ColorSensor colorSensor = null;
+    //private DistanceSensor 
+
   
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
@@ -200,8 +202,9 @@ public class DriveRobot extends LinearOpMode
             }
 
             if(gamepad1.a && gamepad1.x) {
-                drive(0.1,0.5);
-                strafe(2.5,0.6);
+                drive2(10);
+                //drive(0.1, 0.5);
+                //strafe(2.5, 0.6);
                 telemetry.addData("Action", "Auto");
             }
 
@@ -407,10 +410,60 @@ public class DriveRobot extends LinearOpMode
         return(isWhite());
     }
 
+      public void drive2(int distance) {
+    // Constants to use when driving the robot
+
+    // To convert cm into motor position counter values
+    final double DISTANCE_CONSTANT=45;
+    // What power to use to drive the robot
+    final double DRIVE_POWER=0.5;
+    // How long to pause before checking movement
+    final int SLEEP_INTERVAL=50;
+
+    // Stop and reset the motor counter
+    motor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    // Set the motor into the mode that uses the encoder to keep
+    // track of the position
+    motor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    // Set the target position by converting the distance into motor
+    // position values
+    motor1.setTargetPosition((int)DISTANCE_CONSTANT*distance);
+    // Set the motor power
+    motor1.setPower(DRIVE_POWER);
+    
+    // Do the same for for right motor, but opposite direction
+    motor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor2.setTargetPosition((int)DISTANCE_CONSTANT*distance);
+    motor2.setPower(DRIVE_POWER);
+
+    motor3.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor3.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor3.setTargetPosition((int)DISTANCE_CONSTANT*distance);
+    motor3.setPower(DRIVE_POWER);
+
+    motor4.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor4.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor4.setTargetPosition((int)DISTANCE_CONSTANT*distance);
+    motor4.setPower(DRIVE_POWER);
+
+
+
+    // Sleep a bit to make sure the motor report as "busy"
+    sleep(SLEEP_INTERVAL);
+    // Loop as long as either motor reports as busy
+    while(motor1.isBusy() || motor2.isBusy() || motor3.isBusy() || motor4.isBusy()) {
+      // Sleep until next check
+      sleep(SLEEP_INTERVAL);
+      // Write the telemetry to the console
+      //writeTelemetry();
+    }
+  } 
+
     void auto() {
         boolean detectedWhite=false;
 
-        strafe(-0.5);
+        strafe(-0.5,0.5);
         detectedWhite=driveToWhite(0.5);
         if(detectedWhite) {
             armDown();
