@@ -8,9 +8,8 @@ import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 import com.qualcomm.robotcore.hardware.IMU;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
-import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.external.navigation.*;
+
 
 import java.util.List;
     
@@ -24,6 +23,7 @@ import com.qualcomm.robotcore.hardware.*;
 @TeleOp(name="DriveRobot", group ="Concept")
 public class DriveRobot extends LinearOpMode
 {
+    private DcMotor    motors[]  = new DcMotor[4];
     private DcMotor    motor1   = null;
     private DcMotor    motor2   = null;
     private DcMotor    motor3   = null;
@@ -38,9 +38,8 @@ public class DriveRobot extends LinearOpMode
     private boolean armUp=false;
     private boolean clawClosed=false;
     private ColorSensor colorSensor = null;
-    //private DistanceSensor 
+    private DistanceSensor distanceSensor = null;
 
-  
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
      */
@@ -72,12 +71,18 @@ public class DriveRobot extends LinearOpMode
         motor2  = hardwareMap.get(DcMotor.class, "motor2");
         motor3  = hardwareMap.get(DcMotor.class, "motor3");
         motor4  = hardwareMap.get(DcMotor.class, "motor4");
+        motors[0] = motor1;
+        motors[1] = motor2;
+        motors[2] = motor3;
+        motors[3] = motor4;
+
         launcher = hardwareMap.get(Servo.class, "launcher");
         claw    = hardwareMap.get(Servo.class, "claw");
         arm     = hardwareMap.get(Servo.class, "arm");
         lift    = hardwareMap.get(DcMotor.class, "lift");
         colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
-        
+        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
+
         motor1.setDirection(DcMotor.Direction.REVERSE);
         motor2.setDirection(DcMotor.Direction.FORWARD);
         motor3.setDirection(DcMotor.Direction.REVERSE);
@@ -109,13 +114,13 @@ public class DriveRobot extends LinearOpMode
                           +sideScale*sideInput
                           +turnScale*turnInput;
             motor2Power = driveScale*driveInput
-                          +sideScale*sideInput
+                          -sideScale*sideInput
                           -turnScale*turnInput;
             motor3Power = driveScale*driveInput
                           -sideScale*sideInput
                           +turnScale*turnInput;
             motor4Power = driveScale*driveInput
-                          -sideScale*sideInput
+                          +sideScale*sideInput
                           -turnScale*turnInput;
             double scale = 3;
             if (!gamepad1.right_bumper) {
@@ -145,7 +150,7 @@ public class DriveRobot extends LinearOpMode
             //telemetry.addData("turnInput",  turnInput);
             //telemetry.addData("Plane Launched", isPlaneLaunched);
             telemetry.addData("colorSensor", "r:"+ colorSensor.red() +" g:"+ colorSensor.green() +" b:"+ colorSensor.blue());
-
+            telemetry.addData("distance", getDistance());
             if(gamepad1.dpad_right) {
                 if(gamepad1.right_bumper) {
                     turn(-15);
@@ -196,7 +201,7 @@ public class DriveRobot extends LinearOpMode
                 sleep(500);
             }
             
-            if(gamepad1.x) {
+            /* if(gamepad1.x) {
                 armHalfway();
                 telemetry.addData("Action", "Arm Halfway");
             }
@@ -206,7 +211,7 @@ public class DriveRobot extends LinearOpMode
                 //drive(0.1, 0.5);
                 //strafe(2.5, 0.6);
                 telemetry.addData("Action", "Auto");
-            }
+            } */
 
             if(gamepad1.right_trigger>0.1) {
                 extendLift();
@@ -223,6 +228,10 @@ public class DriveRobot extends LinearOpMode
                gamepad1.right_trigger<=0.1) {
                stopLift();
                telemetry.addData("Action", "Lift Stop");
+            }
+
+            if(gamepad1.x) {
+                drive(1000);
             }
 
             telemetryTfod();
@@ -285,7 +294,7 @@ public class DriveRobot extends LinearOpMode
 
         while(remainingAngle>0.5) {
 
-            double power=getPower(remainingAngle);
+            double power=getTurnPower(remainingAngle);
             motor1.setPower(-1*direction*power);
             motor2.setPower(1*direction*power);
             motor3.setPower(-1*direction*power);
@@ -300,7 +309,7 @@ public class DriveRobot extends LinearOpMode
         motor4.setPower(0); 
     }
 
-    double getPower(double remainingAngle) {
+    double getTurnPower(double remainingAngle) {
         return((remainingAngle+10)/100);
     }
 
@@ -334,24 +343,45 @@ public class DriveRobot extends LinearOpMode
         isLiftMoving = false;
     }
 
-    void drive(double distance, double speed) {
+
+    void driveDistance(int mm) {
+        double currentDistance=getDistance();
         int direction=0;
-        if(distance<0) {
+        double targetDistance=currentDistance-mm;
+        double remainingDistance=Math.abs(targetDistance-currentDistance);
+
+        if(mm<0) {
             direction=-1;
         } else {
             direction=1;
         }
 
-        motor1.setPower(speed*direction);
-        motor2.setPower(speed*direction);
-        motor3.setPower(speed*direction);
-        motor4.setPower(speed*direction); 
-        sleep(distanceToTime(distance));
+        while(remainingDistance>=5) {
+            double power=getDrivePower(remainingDistance);
+            motor1.setPower(1*direction*power);
+            motor2.setPower(1*direction*power);
+            motor3.setPower(1*direction*power);
+            motor4.setPower(1*direction*power);
+            currentDistance=getDistance();
+            remainingDistance=Math.abs(targetDistance-currentDistance);
+            telemetry.addData("distance:",remainingDistance);
+            telemetry.update();
+        } 
+
         motor1.setPower(0);
         motor2.setPower(0);
         motor3.setPower(0);
-        motor4.setPower(0);
+        motor4.setPower(0);   
     }
+
+    double getDrivePower(double remainingDistance) {
+        return((remainingDistance+10)/100);
+    }
+
+    double getDistance() {
+        return distanceSensor.getDistance(DistanceUnit.MM);
+    }
+
 
     void strafe(double distance, double speed) {
         int direction=0;
@@ -410,55 +440,73 @@ public class DriveRobot extends LinearOpMode
         return(isWhite());
     }
 
-      public void drive2(int distance) {
-    // Constants to use when driving the robot
+    public void drive(int distance) {
+        // Constants to use when driving the robot
 
-    // To convert cm into motor position counter values
-    final double DISTANCE_CONSTANT=45;
-    // What power to use to drive the robot
-    final double DRIVE_POWER=0.5;
-    // How long to pause before checking movement
-    final int SLEEP_INTERVAL=50;
+        // To convert cm into motor position counter values
+        final double DISTANCE_CONSTANT=2;
+        // What power to use to drive the robot
+        final double DRIVE_POWER=0.8;
+        // What power to use to drive the robot
+        final double MIN_POWER=0.1;
+        // How long to pause before checking movement
+        final int SLEEP_INTERVAL=10;
+        // Acceleration distance (in encoder clicks). 300mm in this case:
+        final double ACCEL_DIST=300.0*DISTANCE_CONSTANT;
 
-    // Stop and reset the motor counter
-    motor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    // Set the motor into the mode that uses the encoder to keep
-    // track of the position
-    motor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    // Set the target position by converting the distance into motor
-    // position values
-    motor1.setTargetPosition((int)DISTANCE_CONSTANT*distance);
-    // Set the motor power
-    motor1.setPower(DRIVE_POWER);
+        int targetPosition=(int)DISTANCE_CONSTANT*distance;
+
+        for(DcMotor motor : motors) {
+            // Stop and reset the motor counter
+            motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            // Set the motor into the mode that uses the encoder to keep
+            // track of the position
+            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            // Set the target position by converting the distance into motor
+            // position values
+            motor.setTargetPosition(targetPosition);            
+        }
+        
+        telemetry.addData("motor1",motor1.getCurrentPosition());
+        telemetry.update();
+
+        // Sleep a bit to make sure the motor report as "busy"
+        sleep(SLEEP_INTERVAL);
+        // Loop as long as either motor reports as busy
+        boolean isBusy=false;
+        do {
+
+            int currentPosition=motor1.getCurrentPosition();
+            telemetry.addData("motor1",currentPosition);
+            telemetry.update();
     
-    // Do the same for for right motor, but opposite direction
-    motor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    motor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    motor2.setTargetPosition((int)DISTANCE_CONSTANT*distance);
-    motor2.setPower(DRIVE_POWER);
+            int lengthToTarget=Math.abs(targetPosition-currentPosition);
+            if (lengthToTarget>Math.abs(currentPosition)) {
+                lengthToTarget=Math.abs(currentPosition);
+            }
+            
+            double power=(DRIVE_POWER-MIN_POWER)*(lengthToTarget/ACCEL_DIST)+MIN_POWER;
+            if(lengthToTarget>=ACCEL_DIST) {
+                power=DRIVE_POWER;
+            }
+            
+            for(DcMotor motor : motors) {
+              motor.setPower(power);
+            }
+    
+              // Sleep until next check
+            sleep(SLEEP_INTERVAL);
+            isBusy=false;
+            for(DcMotor motor : motors) {
+                if(motor.isBusy())isBusy=true;
+            }
+        } while(isBusy);
 
-    motor3.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    motor3.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    motor3.setTargetPosition((int)DISTANCE_CONSTANT*distance);
-    motor3.setPower(DRIVE_POWER);
-
-    motor4.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    motor4.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    motor4.setTargetPosition((int)DISTANCE_CONSTANT*distance);
-    motor4.setPower(DRIVE_POWER);
-
-
-
-    // Sleep a bit to make sure the motor report as "busy"
-    sleep(SLEEP_INTERVAL);
-    // Loop as long as either motor reports as busy
-    while(motor1.isBusy() || motor2.isBusy() || motor3.isBusy() || motor4.isBusy()) {
-      // Sleep until next check
-      sleep(SLEEP_INTERVAL);
-      // Write the telemetry to the console
-      //writeTelemetry();
-    }
-  } 
+        for(DcMotor motor : motors) {
+            motor.setPower(0);
+            motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }        
+    } 
 
     void auto() {
         boolean detectedWhite=false;
