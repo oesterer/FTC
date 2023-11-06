@@ -23,7 +23,11 @@ import com.qualcomm.robotcore.hardware.*;
 @TeleOp(name="DriveRobot", group ="Concept")
 public class DriveRobot extends LinearOpMode
 {
+    // Array to hold all 4 motors, this can be use in loops
+    // such at this  " for(DcMotor motor : motors) {} " to execute 
+    // action on all 4 motors.
     private DcMotor    motors[]  = new DcMotor[4];
+
     private DcMotor    motor1   = null;
     private DcMotor    motor2   = null;
     private DcMotor    motor3   = null;
@@ -34,10 +38,10 @@ public class DriveRobot extends LinearOpMode
     private DcMotor    lift     = null;
     private DcMotor    motorTest   = null;
     private boolean    isLiftMoving = false;
-    private boolean     isPlaneLaunched = false;  
-    private boolean armUp=false;
-    private boolean clawClosed=false;
-    private ColorSensor colorSensor = null;
+    private boolean    isPlaneLaunched = false;  
+    private boolean    armUp=false;
+    private boolean    clawClosed=false;
+    private ColorSensor    colorSensor = null;
     private DistanceSensor distanceSensor = null;
 
     /**
@@ -71,10 +75,10 @@ public class DriveRobot extends LinearOpMode
         motor2  = hardwareMap.get(DcMotor.class, "motor2");
         motor3  = hardwareMap.get(DcMotor.class, "motor3");
         motor4  = hardwareMap.get(DcMotor.class, "motor4");
-        motors[0] = motor1;
-        motors[1] = motor2;
-        motors[2] = motor3;
-        motors[3] = motor4;
+        motors[0]=(motor1);
+        motors[1]=(motor2);
+        motors[2]=(motor3);
+        motors[3]=(motor4);
 
         launcher = hardwareMap.get(Servo.class, "launcher");
         claw    = hardwareMap.get(Servo.class, "claw");
@@ -201,17 +205,6 @@ public class DriveRobot extends LinearOpMode
                 sleep(500);
             }
             
-            /* if(gamepad1.x) {
-                armHalfway();
-                telemetry.addData("Action", "Arm Halfway");
-            }
-
-            if(gamepad1.a && gamepad1.x) {
-                drive2(10);
-                //drive(0.1, 0.5);
-                //strafe(2.5, 0.6);
-                telemetry.addData("Action", "Auto");
-            } */
 
             if(gamepad1.right_trigger>0.1) {
                 extendLift();
@@ -231,7 +224,7 @@ public class DriveRobot extends LinearOpMode
             }
 
             if(gamepad1.x) {
-                drive(1000);
+                auto();
             }
 
             telemetryTfod();
@@ -343,101 +336,18 @@ public class DriveRobot extends LinearOpMode
         isLiftMoving = false;
     }
 
-
-    void driveDistance(int mm) {
-        double currentDistance=getDistance();
-        int direction=0;
-        double targetDistance=currentDistance-mm;
-        double remainingDistance=Math.abs(targetDistance-currentDistance);
-
-        if(mm<0) {
-            direction=-1;
-        } else {
-            direction=1;
-        }
-
-        while(remainingDistance>=5) {
-            double power=getDrivePower(remainingDistance);
-            motor1.setPower(1*direction*power);
-            motor2.setPower(1*direction*power);
-            motor3.setPower(1*direction*power);
-            motor4.setPower(1*direction*power);
-            currentDistance=getDistance();
-            remainingDistance=Math.abs(targetDistance-currentDistance);
-            telemetry.addData("distance:",remainingDistance);
-            telemetry.update();
-        } 
-
-        motor1.setPower(0);
-        motor2.setPower(0);
-        motor3.setPower(0);
-        motor4.setPower(0);   
-    }
-
-    double getDrivePower(double remainingDistance) {
-        return((remainingDistance+10)/100);
-    }
-
     double getDistance() {
         return distanceSensor.getDistance(DistanceUnit.MM);
-    }
-
-
-    void strafe(double distance, double speed) {
-        int direction=0;
-        if(distance<0) {
-            direction=-1;
-        } else {
-            direction=1;
-        }
-
-        motor1.setPower(speed*direction);
-        motor2.setPower(speed*direction);
-        motor3.setPower(-1*speed*direction);
-        motor4.setPower(-1*speed*direction); 
-        sleep(distanceToTime(distance));
-        motor1.setPower(0);
-        motor2.setPower(0);
-        motor3.setPower(0);
-        motor4.setPower(0);
     }   
 
     long distanceToTime(double distance) {
         return((long)(Math.abs(distance)*1000));
     } 
 
-    boolean isWhite() {
-        return(colorSensor.blue()>=150 &&
-               colorSensor.red()>=150 &&
-               colorSensor.green()>=150);
-    }
-
-    boolean driveToWhite(double distance) {
-        int direction=0;
-        if(distance<0) {
-            direction=-1;
-        } else {
-            direction=1;
-        }
-        motor1.setPower(0.5*direction);
-        motor2.setPower(0.5*direction);
-        motor3.setPower(0.5*direction);
-        motor4.setPower(0.5*direction); 
-
-        long maxTime=distanceToTime(distance);
-        long elapsedTime=0;
-        while(elapsedTime<=maxTime &&
-              !isWhite()) {
-            sleep(50);
-            elapsedTime=elapsedTime+50;
-        }
-        
-        motor1.setPower(0);
-        motor2.setPower(0);
-        motor3.setPower(0);
-        motor4.setPower(0);
-
-        return(isWhite());
+    boolean isBlue() {
+        return(colorSensor.blue()>=250 &&
+               colorSensor.red()<=100 &&
+               colorSensor.green()<=100);
     }
 
     public void drive(int distance) {
@@ -480,6 +390,13 @@ public class DriveRobot extends LinearOpMode
             telemetry.addData("motor1",currentPosition);
             telemetry.update();
     
+            // Determine the closest distiance to either starting position
+            // or target. When close to start, we accelerate, when close to 
+            // target, we decelerate. When we are far from both, the robot 
+            // drives at DRIVE_POWER speed. To avoid not moving at all, the
+            // minimum speed is set to MIN_POWER. The distance over which to 
+            // accerate or decelerate is ACCEL_DIST. All math is done in 
+            // encoder "clicks", 300 mm is about 600 encoder clicks.
             int lengthToTarget=Math.abs(targetPosition-currentPosition);
             if (lengthToTarget>Math.abs(currentPosition)) {
                 lengthToTarget=Math.abs(currentPosition);
@@ -494,7 +411,90 @@ public class DriveRobot extends LinearOpMode
               motor.setPower(power);
             }
     
-              // Sleep until next check
+            // Sleep until next check
+            sleep(SLEEP_INTERVAL);
+            isBusy=false;
+            for(DcMotor motor : motors) {
+                if(motor.isBusy())isBusy=true;
+            }
+        } while(isBusy);
+
+        for(DcMotor motor : motors) {
+            motor.setPower(0);
+            motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }        
+    } 
+
+
+
+    public void strafe(int distance) {
+        // Constants to use when driving the robot
+
+        // To convert cm into motor position counter values
+        final double DISTANCE_CONSTANT=2;
+        // What power to use to drive the robot
+        final double DRIVE_POWER=0.8;
+        // What power to use to drive the robot
+        final double MIN_POWER=0.1;
+        // How long to pause before checking movement
+        final int SLEEP_INTERVAL=10;
+        // Acceleration distance (in encoder clicks). 300mm in this case:
+        final double ACCEL_DIST=300.0*DISTANCE_CONSTANT;
+
+        int targetPosition=(int)DISTANCE_CONSTANT*distance;
+        int motorNumber=0;
+        for(DcMotor motor : motors) {
+            // Stop and reset the motor counter
+            motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            // Set the motor into the mode that uses the encoder to keep
+            // track of the position
+            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            // Set the target position by converting the distance into motor
+            // position values
+            
+            if(motorNumber==1 || motorNumber==2) {
+                motor.setTargetPosition(targetPosition*-1);
+            } else {
+                motor.setTargetPosition(targetPosition);
+            }
+            motorNumber++;            
+        }
+        
+        telemetry.addData("motor1",motor1.getCurrentPosition());
+        telemetry.update();
+
+        // Sleep a bit to make sure the motor report as "busy"
+        sleep(SLEEP_INTERVAL);
+        // Loop as long as either motor reports as busy
+        boolean isBusy=false;
+        do {
+
+            int currentPosition=motor1.getCurrentPosition();
+            telemetry.addData("motor1",currentPosition);
+            telemetry.update();
+    
+            // Determine the closest distiance to either starting position
+            // or target. When close to start, we accelerate, when close to 
+            // target, we decelerate. When we are far from both, the robot 
+            // drives at DRIVE_POWER speed. To avoid not moving at all, the
+            // minimum speed is set to MIN_POWER. The distance over which to 
+            // accerate or decelerate is ACCEL_DIST. All math is done in 
+            // encoder "clicks", 300 mm is about 600 encoder clicks.
+            int lengthToTarget=Math.abs(targetPosition-currentPosition);
+            if (lengthToTarget>Math.abs(currentPosition)) {
+                lengthToTarget=Math.abs(currentPosition);
+            }
+            
+            double power=(DRIVE_POWER-MIN_POWER)*(lengthToTarget/ACCEL_DIST)+MIN_POWER;
+            if(lengthToTarget>=ACCEL_DIST) {
+                power=DRIVE_POWER;
+            }
+            
+            for(DcMotor motor : motors) {
+              motor.setPower(power);
+            }
+    
+            // Sleep until next check
             sleep(SLEEP_INTERVAL);
             isBusy=false;
             for(DcMotor motor : motors) {
@@ -509,27 +509,31 @@ public class DriveRobot extends LinearOpMode
     } 
 
     void auto() {
-        boolean detectedWhite=false;
+        boolean detectedBlue=false;
 
-        strafe(-0.5,0.5);
-        detectedWhite=driveToWhite(0.5);
-        if(detectedWhite) {
-            armDown();
-            release();
+        drive(-250);
+        strafe(585);
+        sleep(3000);
+        detectedBlue=isBlue();
+        if(detectedBlue || gamepad1.x) {       
+            drive(-100);
+            sleep(1000);
         } else {
-             turn(90);
-             detectedWhite=driveToWhite(0.5);
-             if(detectedWhite){
-                armDown();
-                release();
-             } else {
-                turn(90);
-                detectedWhite=driveToWhite(0.5);
-                if(detectedWhite){
-                armDown();
-                release();
-                }  
-             }
+            drive(300);
+            strafe(150);
+            sleep(3000);
+            detectedBlue=isBlue();
+            if(detectedBlue || gamepad1.x) {
+                drive(-100);
+                sleep(1000);
+            } else {
+                sleep(3000);
+                strafe(-125);
+                drive(100);
+                sleep(3000);
+                drive(-100);
+                sleep(1000);
+            }
         }
     }
 
