@@ -80,6 +80,20 @@ public class MyFIRSTJavaOpMode extends LinearOpMode {
                 turnInput=1;
             }
 
+            // x
+            if(gamepad1.pressKey(120)>0) {
+                //wrist.setPower(1);
+                rightShoulder.setPower(-1);
+                sleep(1500);
+                rightShoulder.setPower(0);
+                drive(1500);
+                turn(90);
+                drive(-50);
+                strafe(-2000);
+                sleep(1000);
+                auto();
+            }
+
             // Combine the three inputs, with their respective scale, and 
             // compute the corresponsing motor output
             motor1Power = driveScale*driveInput
@@ -126,4 +140,199 @@ public class MyFIRSTJavaOpMode extends LinearOpMode {
             sleep(10);
         }
     }
+
+  /**
+   * Method to drive the robot forward by a specified number of centimeters
+   * 
+   * @param distance Distance in mm of how far we want the robot to drive
+   */
+  public void drive(int distance) {
+    // Constants to use when driving the robot
+
+    // To convert cm into motor position counter values
+    final double DISTANCE_CONSTANT=5;
+    // What power to use to drive the robot
+    final double DRIVE_POWER=0.5;
+    // How long to pause before checking movement
+    final int SLEEP_INTERVAL=50;
+
+    // Stop and reset the motor counter
+    motor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor3.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor4.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    // Set the motor into the mode that uses the encoder to keep
+    // track of the position
+    motor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor3.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor4.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    // Set the target position by converting the distance into motor
+    // position values
+    motor1.setTargetPosition(DISTANCE_CONSTANT*distance);
+    motor2.setTargetPosition(DISTANCE_CONSTANT*distance);
+    motor3.setTargetPosition(DISTANCE_CONSTANT*distance);
+    motor4.setTargetPosition(DISTANCE_CONSTANT*distance);
+    // Set the motor power
+    motor1.setPower(DRIVE_POWER);
+    motor2.setPower(DRIVE_POWER);
+    motor3.setPower(DRIVE_POWER);
+    motor4.setPower(DRIVE_POWER);
+
+    // Sleep a bit to make sure the motor report as "busy"
+    sleep(SLEEP_INTERVAL);
+    // Loop as long as either motor reports as busy
+    while(motor1.isBusy() || motor2.isBusy() || motor3.isBusy() || motor4.isBusy()) {
+      // Sleep until next check
+      sleep(SLEEP_INTERVAL);
+    }
+
+    motor1.setPower(0);
+    motor2.setPower(0);
+    motor3.setPower(0);
+    motor4.setPower(0);
+    motor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    motor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    motor3.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    motor4.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);    
+  } 
+
+  /**
+   * Method to drive the robot sideways by a specified number of centimeters
+   * 
+   * @param distance Distance in mm of how far we want the robot to drive
+   */
+  public void strafe(int distance) {
+    // Constants to use when driving the robot
+
+    // To convert cm into motor position counter values
+    final double DISTANCE_CONSTANT=5;
+    // What power to use to drive the robot
+    final double DRIVE_POWER=0.5;
+    // How long to pause before checking movement
+    final int SLEEP_INTERVAL=50;
+
+    // Stop and reset the motor counter
+    motor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor3.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor4.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    // Set the motor into the mode that uses the encoder to keep
+    // track of the position
+    motor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor3.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor4.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    // Set the target position by converting the distance into motor
+    // position values
+    motor1.setTargetPosition(DISTANCE_CONSTANT*distance);
+    motor2.setTargetPosition(-1*DISTANCE_CONSTANT*distance);
+    motor3.setTargetPosition(-1*DISTANCE_CONSTANT*distance);
+    motor4.setTargetPosition(DISTANCE_CONSTANT*distance);
+    // Set the motor power
+    motor1.setPower(DRIVE_POWER);
+    motor2.setPower(DRIVE_POWER);
+    motor3.setPower(DRIVE_POWER);
+    motor4.setPower(DRIVE_POWER);
+
+    // Sleep a bit to make sure the motor report as "busy"
+    sleep(SLEEP_INTERVAL);
+    // Loop as long as either motor reports as busy
+    while(motor1.isBusy() || motor2.isBusy() || motor3.isBusy() || motor4.isBusy()) {
+      // Sleep until next check
+      sleep(SLEEP_INTERVAL);
+    }
+
+    motor1.setPower(0);
+    motor2.setPower(0);
+    motor3.setPower(0);
+    motor4.setPower(0);
+    motor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    motor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    motor3.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    motor4.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);    
+  } 
+
+  /**
+   * Method to turn the robot by a specified number of degrees.
+   * 
+   * @param degrees Number of degrees to turn the robot by. Provide 
+   * a negative number to turn left.
+   */
+  public void turn(int degrees) {
+    final double DEGREES_CONSTANT=32.5;
+    final double TURNING_POWER=0.5;
+    final int SLEEP_INTERVAL=50;
+
+    // Stop and reset the motor counter
+    motor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor3.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    motor4.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    // Set the motor into the mode that uses the encoder to keep
+    // track of the position
+    motor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor3.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    motor4.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+    // Set the target position by converting the degrees into motor
+    // position values
+    motor1.setTargetPosition(DEGREES_CONSTANT*degrees);
+    motor2.setTargetPosition(-1*DEGREES_CONSTANT*degrees);
+    motor3.setTargetPosition(DEGREES_CONSTANT*degrees);
+    motor4.setTargetPosition(-1*DEGREES_CONSTANT*degrees);
+    // Set the motor power
+    motor1.setPower(TURNING_POWER);
+    motor2.setPower(TURNING_POWER);
+    motor3.setPower(TURNING_POWER);
+    motor4.setPower(TURNING_POWER);
+
+    // Sleep a bit to make sure the motor report as "busy"
+    sleep(SLEEP_INTERVAL);
+    // Loop as long as either motor reports as busy
+    while(motor1.isBusy() || motor2.isBusy() || motor3.isBusy() || motor4.isBusy()) {
+      // Sleep until next check
+      sleep(SLEEP_INTERVAL);
+    }
+
+    motor1.setPower(0);
+    motor2.setPower(0);
+    motor3.setPower(0);
+    motor4.setPower(0);
+    motor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    motor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    motor3.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    motor4.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+  }
+
+
+    void auto() {
+        boolean detectedBlue=false;
+
+        drive(-250);
+        strafe(585);
+        sleep(3000);
+        //detectedBlue=isBlue();
+        if(detectedBlue /*|| gamepad1.x*/) {       
+            drive(-100);
+            sleep(1000);
+        } else {
+            drive(300);
+            strafe(150);
+            sleep(3000);
+            //detectedBlue=isBlue();
+            if(detectedBlue /*|| gamepad1.x*/) {
+                drive(-100);
+                sleep(1000);
+            } else {
+                sleep(3000);
+                strafe(-125);
+                drive(100);
+                sleep(3000);
+                drive(-100);
+                sleep(1000);
+            }
+        }
+    }  
+
 }
