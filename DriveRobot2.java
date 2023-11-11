@@ -26,33 +26,35 @@ public class DriveRobot extends LinearOpMode
     // Array to hold all 4 motors, this can be use in loops
     // such at this  " for(DcMotor motor : motors) {} " to execute 
     // action on all 4 motors.
-    private DcMotor    motors[]  = new DcMotor[4];
+    DcMotor    motors[]  = new DcMotor[4];
 
-    private DcMotor    motor1   = null;
-    private DcMotor    motor2   = null;
-    private DcMotor    motor3   = null;
-    private DcMotor    motor4   = null;
-    private Servo      launcher = null;
-    private Servo      claw     = null;
-    private Servo      arm      = null;
-    private DcMotor    lift     = null;
-    private DcMotor    motorTest   = null;
-    private boolean    isLiftMoving = false;
-    private boolean    isPlaneLaunched = false;  
-    private boolean    armUp=false;
-    private boolean    clawClosed=false;
-    private ColorSensor    colorSensor = null;
-    private DistanceSensor distanceSensor = null;
+    DcMotor    motor1   = null;
+    DcMotor    motor2   = null;
+    DcMotor    motor3   = null;
+    DcMotor    motor4   = null;
+    Servo      launcher = null;
+    Servo      claw1    = null;
+    Servo      claw2    = null;
+    Servo      wrist    = null;
+    DcMotor    liftR    = null;
+    DcMotor    liftL    = null;
+    DcMotor    motorTest   = null;
+    boolean    isLiftMoving = false;
+    boolean    isPlaneLaunched = false;  
+    boolean    wristUp=false;
+    boolean    clawClosed=false;
+    ColorSensor    colorSensor = null;
+    DistanceSensor distanceSensor = null;
 
     /**
      * The variable to store our instance of the TensorFlow Object Detection processor.
      */
-    private TfodProcessor tfod;
+    TfodProcessor tfod;
 
     /**
      * The variable to store our instance of the vision portal.
      */
-    private VisionPortal visionPortal;
+    VisionPortal visionPortal;
     IMU imu;
     int logoFacingDirectionPosition;
     int usbFacingDirectionPosition;
@@ -62,7 +64,7 @@ public class DriveRobot extends LinearOpMode
     static RevHubOrientationOnRobot.UsbFacingDirection[] usbFacingDirections
             = RevHubOrientationOnRobot.UsbFacingDirection.values();
 
-    @Override public void runOpMode() throws InterruptedException {
+    void init() {
         imu = hardwareMap.get(IMU.class, "imu");
         logoFacingDirectionPosition = 0; // Up
         usbFacingDirectionPosition = 2; // Forward
@@ -81,9 +83,11 @@ public class DriveRobot extends LinearOpMode
         motors[3]=(motor4);
 
         launcher = hardwareMap.get(Servo.class, "launcher");
-        claw    = hardwareMap.get(Servo.class, "claw");
-        arm     = hardwareMap.get(Servo.class, "arm");
-        lift    = hardwareMap.get(DcMotor.class, "lift");
+        claw1    = hardwareMap.get(Servo.class, "claw1");
+        claw2    = hardwareMap.get(Servo.class, "claw2");
+        wrist    = hardwareMap.get(Servo.class, "wrist");
+        liftR    = hardwareMap.get(DcMotor.class, "liftR");
+        liftL    = hardwareMap.get(DcMotor.class, "liftL");
         colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
 
@@ -95,8 +99,11 @@ public class DriveRobot extends LinearOpMode
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
 
         telemetry.addData(">", "Press Start");
-        telemetry.update();
+        telemetry.update();        
+    }
 
+    @Override public void runOpMode() throws InterruptedException {
+        init();
         waitForStart();
 
         while (opModeIsActive())
@@ -193,14 +200,14 @@ public class DriveRobot extends LinearOpMode
             }
 
             if(gamepad1.y) {
-                if(armUp) {
-                    armDown();
-                    armUp=false;
-                    telemetry.addData("Action", "Arm Down");
+                if(wristUp) {
+                    wristDown();
+                    wristUp=false;
+                    telemetry.addData("Action", "Wrist Down");
                 } else {
-                    armUp();
-                    armUp=true;
-                    telemetry.addData("Action", "Arm Up");
+                    wristUp();
+                    wristUp=true;
+                    telemetry.addData("Action", "Wrist Up");
                 }
                 sleep(500);
             }
@@ -224,7 +231,7 @@ public class DriveRobot extends LinearOpMode
             }
 
             if(gamepad1.x) {
-                auto();
+                auto2();
             }
 
             telemetryTfod();
@@ -240,7 +247,6 @@ public class DriveRobot extends LinearOpMode
         motor4.setPower(0.25);
         while(true){
          List<Recognition> currentRecognitions = tfod.getRecognitions();
-
          if(currentRecognitions.size()>0)break;
         
         }
@@ -253,23 +259,25 @@ public class DriveRobot extends LinearOpMode
     }
 
     void grab() {
-        claw.setPosition(0.75);
+        claw1.setPosition(0.75);
+        claw2.setPosition(0.4);
     }
 
     void release() {
-        claw.setPosition(0.4);
+        claw1.setPosition(0.4);
+        claw2.setPosition(0.75);
     }
 
-    void armUp() {
-        arm.setPosition(0.35);
+    void wristUp() {
+        wrist.setPosition(0.35);
     }
 
-    void armDown() {
-        arm.setPosition(1);
+    void wristDown() {
+        wrist.setPosition(1);
     }
 
-    void armHalfway() {
-        arm.setPosition(0.85);
+    void wristHalfway() {
+        wrist.setPosition(0.85);
     }
 
     void turn(int angle) {
@@ -322,23 +330,34 @@ public class DriveRobot extends LinearOpMode
     }
 
     void extendLift() {
-        lift.setPower(.85);
+        liftL.setPower(.85);
+        liftR.setPower(-.85);
         isLiftMoving = true; 
     }
 
     void contractLift() {
-        lift.setPower(-.85);
+        liftL.setPower(-.85);
+        liftR.setPower(.85);
         isLiftMoving = true; 
     }
 
     void stopLift() {
-        lift.setPower(0);
+        liftL.setPower(0);
+        liftR.setPower(0);
         isLiftMoving = false;
     }
 
     double getDistance() {
         return distanceSensor.getDistance(DistanceUnit.MM);
     }   
+
+    boolean seeBlock(int distance) {
+        if(getDistance()<=distance) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     long distanceToTime(double distance) {
         return((long)(Math.abs(distance)*1000));
@@ -448,15 +467,18 @@ public class DriveRobot extends LinearOpMode
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             // Set the motor into the mode that uses the encoder to keep
             // track of the position
-            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            // Set the target position by converting the distance into motor
-            // position values
             
             if(motorNumber==1 || motorNumber==2) {
                 motor.setTargetPosition(targetPosition*-1);
             } else {
                 motor.setTargetPosition(targetPosition);
             }
+            
+            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            // Set the target position by converting the distance into motor
+            // position values
+            
+
             motorNumber++;            
         }
         
@@ -508,6 +530,9 @@ public class DriveRobot extends LinearOpMode
         }        
     } 
 
+
+
+/*
     void auto() {
         boolean detectedBlue=false;
 
@@ -536,11 +561,14 @@ public class DriveRobot extends LinearOpMode
             }
         }
     }
+*/
+
+
 
     /**
      * Initialize the TensorFlow Object Detection processor.
      */
-    private void initTfod() {
+    void initTfod() {
 
         // Create the TensorFlow processor by using a builder.
         tfod = new TfodProcessor.Builder()
@@ -599,7 +627,7 @@ public class DriveRobot extends LinearOpMode
     /**
      * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
      */
-    private void telemetryTfod() {
+    void telemetryTfod() {
 
         List<Recognition> currentRecognitions = tfod.getRecognitions();
         telemetry.addData("# Objects Detected", currentRecognitions.size());
@@ -628,4 +656,34 @@ public class DriveRobot extends LinearOpMode
         }
     }
 
+
+    void auto2() {
+        if(seeBlock(900)){
+            strafe(100);
+            drive(740);/* At position 2 now (the one directly in front of start)*/
+            drive(-200);
+            park(-540, 0, 90);
+        }else{
+            strafe(320);
+            if(seeBlock(800)){
+                drive(550);/* At the edge of position 1 now */
+                drive(-200);
+                park(-340, 0, 90);
+            }else{
+                drive(590);
+                turn(90);
+                drive(440); /* at pos 3 now */
+                drive(-200);
+                park(0, -700,0);
+            }
+        }
+    }
+
+    void park(int driveDistance, int strafeDistance, int turnAmount) {
+        drive(driveDistance);
+        strafe(strafeDistance);
+        if(turnAmount>0)turn(turnAmount);
+        drive(2300);
+    }
+    
 }
