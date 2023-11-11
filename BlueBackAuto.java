@@ -26,8 +26,8 @@ Robot        2
     @Override void auto() {
         // Is there a team-prop straight ahead? (position 2)
         if(seeBlock(900)) {
-			telemetry.addData("Status", "Detected prop at #2");
-			telemetry.update(); 
+            telemetry.addData("Status", "Detected prop at #2");
+            telemetry.update(); 
             // Move a bit to the side to avoid prop    
             strafe(100);
             // Drive to line
@@ -37,14 +37,14 @@ Robot        2
             // Navigate to parking area
             park(-540, 0, 90);
         } else {
-			telemetry.addData("Status", "Aligning with pos #1");
-			telemetry.update();        	
+            telemetry.addData("Status", "Aligning with pos #1");
+            telemetry.update();            
             // Move sideways to align with position 1
             strafe(320);
             // Is there a team-prop straight ahead? (position 1)
             if(seeBlock(800)) {
-				telemetry.addData("Status", "Detected prop at #1");
-				telemetry.update();            	
+                telemetry.addData("Status", "Detected prop at #1");
+                telemetry.update();                
                 // Drive to line
                 drive(550);/* At the edge of position 1 now */
                 // Drop pixel by backing up
@@ -52,8 +52,8 @@ Robot        2
                 // Navigate to parking area
                 park(-340, 0, 90);
             } else {
-				telemetry.addData("Status", "Dropping pixel at #3");
-				telemetry.update();            	
+                telemetry.addData("Status", "Dropping pixel at #3");
+                telemetry.update();                
                 // Noting detected in pos 1 or 2 -> has to be in pos 3
                 // Drive to align with pos 3
                 drive(590);
@@ -70,14 +70,14 @@ Robot        2
     }
 
     @Override void park(int driveDistance, int strafeDistance, int turnAmount) {
-    	telemetry.addData("Status", "Driving to parking area");
-		telemetry.update(); 
+        telemetry.addData("Status", "Driving to parking area");
+        telemetry.update(); 
         drive(driveDistance);
         strafe(strafeDistance);
         if(turnAmount>0)turn(turnAmount);
         drive(2300);
-    	telemetry.addData("Status", "Parked");
-		telemetry.update();         
+        telemetry.addData("Status", "Parked");
+        telemetry.update();         
     }
 
 }
