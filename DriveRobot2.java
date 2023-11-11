@@ -10,7 +10,6 @@ import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.*;
 
-
 import java.util.List;
     
 import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraCharacteristics;
@@ -162,6 +161,7 @@ public class DriveRobot extends LinearOpMode
             //telemetry.addData("Plane Launched", isPlaneLaunched);
             telemetry.addData("colorSensor", "r:"+ colorSensor.red() +" g:"+ colorSensor.green() +" b:"+ colorSensor.blue());
             telemetry.addData("distance", getDistance());
+
             if(gamepad1.dpad_right) {
                 if(gamepad1.right_bumper) {
                     turn(-15);
@@ -231,31 +231,17 @@ public class DriveRobot extends LinearOpMode
             }
 
             if(gamepad1.x) {
-                auto2();
+                auto();
+            }
+
+            if(gamepad1.a) {
+                driveToDistance(300);
             }
 
             telemetryTfod();
             telemetry.update();
             sleep(10);
         }
-    }
-
-    void turntopixel() {
-        motor1.setPower(-0.25);
-        motor2.setPower(0.25);
-        motor3.setPower(-0.25);
-        motor4.setPower(0.25);
-        while(true){
-         List<Recognition> currentRecognitions = tfod.getRecognitions();
-         if(currentRecognitions.size()>0)break;
-        
-        }
-
-         motor1.setPower(0);
-         motor2.setPower(0);
-         motor3.setPower(0);
-         motor4.setPower(0);
-
     }
 
     void grab() {
@@ -304,14 +290,47 @@ public class DriveRobot extends LinearOpMode
             remainingAngle=Math.abs(targetAngle-currentAngle);
         } 
 
-        motor1.setPower(0);
-        motor2.setPower(0);
-        motor3.setPower(0);
-        motor4.setPower(0); 
+        for(DcMotor motor : motors) {
+            motor.setPower(0);
+        }
     }
 
     double getTurnPower(double remainingAngle) {
         return((remainingAngle+10)/100);
+    }
+
+    void driveToDistance(int targetDistance) {
+        double currentDistance=getDistance();
+        double remainingDistance=currentDistance-targetDistance;
+
+        while(remainingDistance>0) {
+
+            double power=getDrivePower(remainingDistance);
+            for(DcMotor motor : motors) {
+                motor.setPower(power);
+            }
+            currentDistance=getDistance();
+            remainingDistance=currentDistance-targetDistance;
+        } 
+
+        for(DcMotor motor : motors) {
+            motor.setPower(0);
+        }
+    }
+
+    double getDrivePower(double remainingDistance) {
+        // What power to use to drive the robot
+        final double DRIVE_POWER=1;
+        // What power to use to drive the robot
+        final double MIN_POWER=0.1;
+        // Deceleration distance
+        final double DECEL_DIST=200.0;
+
+        if(remainingDistance>=DECEL_DIST) {
+            return DRIVE_POWER;
+        } else {
+            return((DRIVE_POWER-MIN_POWER)*(remainingDistance/DECEL_DIST)+MIN_POWER);
+        }   
     }
 
     double getAngle() {
@@ -357,17 +376,7 @@ public class DriveRobot extends LinearOpMode
         } else {
             return false;
         }
-    }
-
-    long distanceToTime(double distance) {
-        return((long)(Math.abs(distance)*1000));
     } 
-
-    boolean isBlue() {
-        return(colorSensor.blue()>=250 &&
-               colorSensor.red()<=100 &&
-               colorSensor.green()<=100);
-    }
 
     public void drive(int distance) {
         // Constants to use when driving the robot
@@ -409,7 +418,7 @@ public class DriveRobot extends LinearOpMode
             telemetry.addData("motor1",currentPosition);
             telemetry.update();
     
-            // Determine the closest distiance to either starting position
+            // Determine the closest distance to either starting position
             // or target. When close to start, we accelerate, when close to 
             // target, we decelerate. When we are far from both, the robot 
             // drives at DRIVE_POWER speed. To avoid not moving at all, the
@@ -443,8 +452,6 @@ public class DriveRobot extends LinearOpMode
             motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }        
     } 
-
-
 
     public void strafe(int distance) {
         // Constants to use when driving the robot
@@ -529,40 +536,6 @@ public class DriveRobot extends LinearOpMode
             motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }        
     } 
-
-
-
-/*
-    void auto() {
-        boolean detectedBlue=false;
-
-        drive(-250);
-        strafe(585);
-        sleep(3000);
-        detectedBlue=isBlue();
-        if(detectedBlue || gamepad1.x) {       
-            drive(-100);
-            sleep(1000);
-        } else {
-            drive(300);
-            strafe(150);
-            sleep(3000);
-            detectedBlue=isBlue();
-            if(detectedBlue || gamepad1.x) {
-                drive(-100);
-                sleep(1000);
-            } else {
-                sleep(3000);
-                strafe(-125);
-                drive(100);
-                sleep(3000);
-                drive(-100);
-                sleep(1000);
-            }
-        }
-    }
-*/
-
 
 
     /**
@@ -656,8 +629,7 @@ public class DriveRobot extends LinearOpMode
         }
     }
 
-
-    void auto2() {
+    void auto() {
         if(seeBlock(900)){
             strafe(100);
             drive(740);/* At position 2 now (the one directly in front of start)*/
