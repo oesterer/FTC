@@ -24,7 +24,6 @@ public class DriveRobot extends LinearOpMode
     Servo      wrist    = null;
     DcMotor    liftR    = null;
     DcMotor    liftL    = null;
-    DcMotor    motorTest   = null;
     boolean    isLiftMoving = false;
     boolean    isPlaneLaunched = false;  
     boolean    wristUp=false;
