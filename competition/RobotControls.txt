@@ -1,0 +1,15 @@
+B claw (open/close)
+Y arm (up/down)
+X arm halfway
+dpad_up launch or load drone
+right_trigger lift extend
+left_trigger lift contract
+
+right_stick_y drive
+right_stick_x strafe
+left_stick_x  turn
+right_bumper  move slower
+
+A & X  auto
+dpad_right turn 90 (15 with right_bumper)
+dpad_left  turn 90 (15 with right_bumper)
