@@ -2,10 +2,25 @@ package org.firstinspires.ftc.teamcode;
 
 public class Auto extends DriveRobot {
 
+    // The 3 attributes mirror, back and name are set by the 
+    // constructor of the sub class.
+
+    // Should truns and stafe movements be mirrored?  1 for normal,
+    // -1 for mirrored
 	int mirror   = 1;
+
+    // Is the starting position in the back or the front? This 
+    // determines the direction and distiance to drive after placing
+    // the pixel
 	boolean back = true;
+
+    // Name of the position, used to display on the screen before
+    // starting the autonomous run
 	String name  = "Auto";
 
+    /**
+     * Main method that gets executed when the robot starts.
+     */
     @Override public void runOpMode() throws InterruptedException {
         initRobot();
         waitForStart();
@@ -25,6 +40,12 @@ Robot        2
 
 */
 
+    /**
+     * Method that determines what the robot does during the 
+     * autonomous session. This code is parameterized for the 
+     * 4 possible start positions. It defaults to the moves
+     * required for BLUE-BACK.
+     */
     void auto() {
         // Is there a team-prop straight ahead? (position 2)
         if(seeBlock(900)) {
@@ -85,6 +106,10 @@ Robot        2
         }
     }
 
+    /**
+     * Method to park the robot after droping a pixel on the spike 
+     * marks.
+     */
     void park(int driveDistance, int strafeDistance, int turnAmount) {
         telemetry.addData("Status", "Driving to parking area");
         telemetry.update(); 
