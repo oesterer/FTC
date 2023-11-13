@@ -56,10 +56,10 @@ public class DriveRobot extends LinearOpMode
         motor3.setDirection(DcMotor.Direction.REVERSE);
         motor4.setDirection(DcMotor.Direction.FORWARD);
 
+        // Move drone servo to loaded position
         loadDrone();
 
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
-        telemetry.addData("distance", getDistance());
         telemetry.addData(">", "Press Start");
         telemetry.update();        
     }

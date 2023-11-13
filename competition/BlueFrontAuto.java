@@ -8,21 +8,10 @@ public class BlueFrontAuto extends Auto {
     // Similar to BlueBack but strafe and turns are mirrored,
     // Parking strategy is different as we are in the front of 
     // the field.
-
-    // Override as -1 for mirrored positions 
-    @Override int mirror() {
-        return -1;
+    public void BlueFrontAuto() {
+        this.mirror = -1;
+        this.back   = false;
+        this.name   = "Blue Front";        
     }
 
-    @Override void parkFrom1() {
-        park(0, 0, -90*mirror());
-    }
-
-    @Override void parkFrom2() {
-        park(0, 0, -90*mirror());
-    }
-
-    @Override void parkFrom3() {
-        park(0, 0, 180);
-    }
 }

@@ -3,12 +3,13 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 @Autonomous(name="RedBackAuto", group ="Concept")
-public class RedBackAuto extends DriveRobot {
+public class RedBackAuto extends BlueBackAuto {
 
     // Same as BlueBack but strafe and turns are mirrored
-
-    // Override as -1 for mirrored positions 
-    @Override int mirror() {
-        return 1;
+    public void RedBackAuto() {
+        this.mirror = -1;
+        this.back   = true;
+        this.name   = "Red Back";        
     }
+
 }

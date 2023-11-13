@@ -2,17 +2,16 @@ package org.firstinspires.ftc.teamcode;
 
 public class Auto extends DriveRobot {
 
+	int mirror   = 1;
+	boolean back = true;
+	String name  = "Auto";
+
     @Override public void runOpMode() throws InterruptedException {
         initRobot();
         waitForStart();
         auto();
     }
  
- 	// Override as -1 for mirrored positions 
- 	int mirror() {
- 		return 1;
- 	}
-
 /*  Field Layout:
 
 Parking     /
@@ -32,18 +31,23 @@ Robot        2
             telemetry.addData("Status", "Detected prop at #2");
             telemetry.update(); 
             // Move a bit to the side to avoid prop    
-            strafe(100*mirror());
+            strafe(100*mirror);
             // Drive to line
             drive(740);/* At position 2 now (the one directly in front of start)*/
             // Drop pixel by backing up
             drive(-200);
             // Navigate to parking area
             parkFrom2();
+            if(back) {
+            	park(-530, 0, 90*mirror);
+            } else {
+                park(0, 0, -90*mirror);
+            }
         } else {
             telemetry.addData("Status", "Aligning with pos #1");
             telemetry.update();            
             // Move sideways to align with position 1
-            strafe(320*mirror());
+            strafe(320*mirror);
             // Is there a team-prop straight ahead? (position 1)
             if(seeBlock(800)) {
                 telemetry.addData("Status", "Detected prop at #1");
@@ -54,6 +58,11 @@ Robot        2
                 drive(-200);
                 // Navigate to parking area
                 parkFrom1();
+                if(back) {
+                	park(-330, 0, 90*mirror);
+                } else {
+                	park(0, 0, -90*mirror);
+                }                
             } else {
                 telemetry.addData("Status", "Dropping pixel at #3");
                 telemetry.update();                
@@ -61,27 +70,19 @@ Robot        2
                 // Drive to align with pos 3
                 drive(590);
                 // Turn left
-                turn(90*mirror());
+                turn(90*mirror);
                 // Drive to the line
                 drive(440); /* at pos 3 now */
                 // Drop pixel by backing up
                 drive(-200);
                 // Navigate to parking area
-                parkFrom3();
+                if(back) {
+                	park(0,-680*mirror,0);
+                } else {
+                	park(0, 0, 180);
+                }
             }
         }
-    }
-
-    void parkFrom1() {
-    	park(-330, 0, 90*mirror());
-    }
-
-    void parkFrom2() {
-    	park(-530, 0, 90*mirror());
-    }
-
-    void parkFrom3() {
-    	park(0,-680*mirror(),0);
     }
 
     void park(int driveDistance, int strafeDistance, int turnAmount) {

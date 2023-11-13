@@ -5,8 +5,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 @Autonomous(name="BlueBackAuto", group ="Concept")
 public class BlueBackAuto extends Auto {
 
-    // Override as -1 for mirrored positions 
-    @Override int mirror() {
-        return 1;
+    public void BlueBackAuto() {
+        this.mirror = 1;
+        this.back   = true;
+        this.name   = "Blue Back";        
     }
+    
 }
