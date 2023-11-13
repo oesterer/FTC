@@ -3,10 +3,12 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 @Autonomous(name="RedFrontAuto", group ="Concept")
-public class RedFrontAuto extends BlueFrontAuto {
+public class RedFrontAuto extends Auto {
 
-    // Override as -1 for mirrored positions 
-    @Override int mirror() {
-        return 1;
+    public void RedFrontAuto() {
+        this.mirror = 1;
+        this.back   = false;
+        this.name   = "Red Front";        
     }
+
 }
