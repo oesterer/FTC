@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+
 @Autonomous(name="BlueBackAuto", group ="Concept")
 public class BlueBackAuto extends DriveRobot {
 
     @Override public void runOpMode() throws InterruptedException {
-        init();
+        initRobot();
         waitForStart();
         auto();
     }
@@ -23,7 +25,8 @@ Robot        2
 
 */
 
-    @Override void auto() {
+    void auto() {
+ 
         // Is there a team-prop straight ahead? (position 2)
         if(seeBlock(900)) {
             telemetry.addData("Status", "Detected prop at #2");
@@ -35,7 +38,7 @@ Robot        2
             // Drop pixel by backing up
             drive(-200);
             // Navigate to parking area
-            park(-540, 0, 90);
+            park(-530, 0, 90);
         } else {
             telemetry.addData("Status", "Aligning with pos #1");
             telemetry.update();            
@@ -50,7 +53,7 @@ Robot        2
                 // Drop pixel by backing up
                 drive(-200);
                 // Navigate to parking area
-                park(-340, 0, 90);
+                park(-330, 0, 90);
             } else {
                 telemetry.addData("Status", "Dropping pixel at #3");
                 telemetry.update();                
@@ -64,20 +67,8 @@ Robot        2
                 // Drop pixel by backing up
                 drive(-200);
                 // Navigate to parking area
-                park(0, -700,0);
+                park(0, -680,0);
             }
         }
     }
-
-    @Override void park(int driveDistance, int strafeDistance, int turnAmount) {
-        telemetry.addData("Status", "Driving to parking area");
-        telemetry.update(); 
-        drive(driveDistance);
-        strafe(strafeDistance);
-        if(turnAmount>0)turn(turnAmount);
-        drive(2300);
-        telemetry.addData("Status", "Parked");
-        telemetry.update();         
-    }
-
 }
