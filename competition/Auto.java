@@ -23,6 +23,12 @@ public class Auto extends DriveRobot {
      */
     @Override public void runOpMode() throws InterruptedException {
         initRobot();
+
+        telemetry.addData("distance", getDistance());
+        telemetry.addData("Mode", name+" mirror:"+mirror+" back:"+back);
+        telemetry.addData(">", "Press Start");
+        telemetry.update();  
+
         waitForStart();
         auto();
     }
@@ -58,7 +64,6 @@ Robot        2
             // Drop pixel by backing up
             drive(-200);
             // Navigate to parking area
-            parkFrom2();
             if(back) {
             	park(-530, 0, 90*mirror);
             } else {
@@ -78,7 +83,6 @@ Robot        2
                 // Drop pixel by backing up
                 drive(-200);
                 // Navigate to parking area
-                parkFrom1();
                 if(back) {
                 	park(-330, 0, 90*mirror);
                 } else {
