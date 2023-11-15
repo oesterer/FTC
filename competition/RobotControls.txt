@@ -1,8 +1,12 @@
+// Claw Controls
+
 B             claw (open/close)
 Y             arm (up/down)
 dpad_up       launch drone and reload
 right_trigger lift extend
 left_trigger  lift contract
+
+// Drive Controls
 
 right_stick_y drive
 right_stick_x strafe

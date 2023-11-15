@@ -8,10 +8,9 @@ public class BlueFrontAuto extends Auto {
     // Similar to BlueBack but strafe and turns are mirrored,
     // Parking strategy is different as we are in the front of 
     // the field.
-    public void BlueFrontAuto() {
-        this.mirror = -1;
-        this.back   = false;
-        this.name   = "Blue Front";        
-    }
-
+    public void setParams() {
+        mirror   = -1;
+        back = false;
+        name  = "Blue Front";        
+    } 
 }

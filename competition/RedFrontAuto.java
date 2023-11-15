@@ -5,10 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 @Autonomous(name="RedFrontAuto", group ="Concept")
 public class RedFrontAuto extends Auto {
 
-    public void RedFrontAuto() {
-        this.mirror = 1;
-        this.back   = false;
-        this.name   = "Red Front";        
-    }
-
+    public void setParams() {
+        mirror   = 1;
+        back = false;
+        name  = "Red Front";        
+    }    
 }

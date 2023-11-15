@@ -6,10 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 public class RedBackAuto extends BlueBackAuto {
 
     // Same as BlueBack but strafe and turns are mirrored
-    public void RedBackAuto() {
-        this.mirror = -1;
-        this.back   = true;
-        this.name   = "Red Back";        
+    public void setParams() {
+        mirror   = -1;
+        back = true;
+        name  = "Red Back";        
     }
-
 }

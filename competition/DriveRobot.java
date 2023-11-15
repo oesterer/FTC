@@ -95,9 +95,9 @@ public class DriveRobot extends LinearOpMode
             motor4Power = driveScale*driveInput
                           +sideScale*sideInput
                           -turnScale*turnInput;
-            double scale = 3;
+            double scale = 1;
             if (!gamepad1.right_bumper) {
-                scale = 1.0;
+                scale = 3.0;
             }
             
             scale=Math.abs(motor1Power)>scale?Math.abs(motor1Power):scale;
@@ -136,14 +136,14 @@ public class DriveRobot extends LinearOpMode
                 }
             }
 
-            if(gamepad1.dpad_up && launcher.getPosition() == 1){
+            if(gamepad2.dpad_up && launcher.getPosition() == 1){
                 launchDrone();
                 sleep(1000);
                 loadDrone();
                 telemetry.addData("Action", "Launch Drone");
             }
 
-            if(gamepad1.b) {
+            if(gamepad2.b) {
                 if(clawClosed) {
                     release();
                     clawClosed=false;
@@ -156,7 +156,7 @@ public class DriveRobot extends LinearOpMode
                 sleep(500);
             }
 
-            if(gamepad1.y) {
+            if(gamepad2.y) {
                 if(wristUp) {
                     wristDown();
                     wristUp=false;
@@ -169,19 +169,19 @@ public class DriveRobot extends LinearOpMode
                 sleep(500);
             }
             
-            if(gamepad1.right_trigger>0.1) {
+            if(gamepad2.right_trigger>0.1) {
                 extendLift();
                 telemetry.addData("Action", "Lift Extend");
             }
 
-            if(gamepad1.left_trigger>0.1) {
+            if(gamepad2.left_trigger>0.1) {
                 contractLift();
                 telemetry.addData("Action", "Lift Contract");
             }
 
             if(isLiftMoving &&    
-               gamepad1.left_trigger<=0.1 &&
-               gamepad1.right_trigger<=0.1) {
+               gamepad2.left_trigger<=0.1 &&
+               gamepad2.right_trigger<=0.1) {
                stopLift();
                telemetry.addData("Action", "Lift Stop");
             }
@@ -192,8 +192,8 @@ public class DriveRobot extends LinearOpMode
     }
 
     void grab() {
-        claw1.setPosition(0.5);
-        claw2.setPosition(0.5);
+        claw1.setPosition(0.2);
+        claw2.setPosition(0.6);
     }
 
     void release() {
