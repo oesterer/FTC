@@ -67,6 +67,7 @@ public class DriveRobot extends LinearOpMode
     @Override public void runOpMode() throws InterruptedException {
         initRobot();
         waitForStart();
+        
 
         while (opModeIsActive())
         {
@@ -119,6 +120,7 @@ public class DriveRobot extends LinearOpMode
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("distance", getDistance());
+            telemetry.addData("wrist", wrist.getPosition());
 
             if(gamepad1.dpad_right) {
                 if(gamepad1.right_bumper) {
@@ -143,6 +145,11 @@ public class DriveRobot extends LinearOpMode
                 telemetry.addData("Action", "Launch Drone");
             }
 
+            if (gamepad1.dpad_down) {
+                turn(90);
+                turn(90);
+            }
+
             if(gamepad2.b) {
                 if(clawClosed) {
                     release();
@@ -152,6 +159,18 @@ public class DriveRobot extends LinearOpMode
                     grab();
                     clawClosed=true;
                     telemetry.addData("Action", "Close Claw");
+                }
+                sleep(500);
+            }
+            
+            if (gamepad2.x) {
+                if(wrist.getPosition() >= 0.64 && wrist.getPosition() <= 0.66) {
+                    wristUp();
+                    wristUp=true;
+                    telemetry.addData("Action", "Wrist Up");
+                } else {
+                    wristGrounded();
+                    telemetry.addData("Action", "Wrist Grounded");
                 }
                 sleep(500);
             }
@@ -191,12 +210,12 @@ public class DriveRobot extends LinearOpMode
         }
     }
 
-    void grab() {
+    void release() {
         claw1.setPosition(0.2);
         claw2.setPosition(0.6);
     }
 
-    void release() {
+    void grab() {
         claw1.setPosition(0);
         claw2.setPosition(1);
     }
@@ -206,9 +225,13 @@ public class DriveRobot extends LinearOpMode
     }
 
     void wristDown() {
+        wrist.setPosition(0.60);
+    }
+    
+    void wristGrounded() {
         wrist.setPosition(0.65);
     }
-
+    
     void turn(int angle) {
         imu.resetYaw();
         double currentAngle=getAngle();
@@ -263,7 +286,7 @@ public class DriveRobot extends LinearOpMode
 
     double getDrivePower(double remainingDistance) {
         // What power to use to drive the robot
-        final double DRIVE_POWER=0.7;
+        final double DRIVE_POWER=0.6;
         // What power to use to drive the robot
         final double MIN_POWER=0.1;
         // Deceleration distance
@@ -339,12 +362,13 @@ public class DriveRobot extends LinearOpMode
         for(DcMotor motor : motors) {
             // Stop and reset the motor counter
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            // Set the target position by converting the distance into motor
+            // position values
+            motor.setTargetPosition(targetPosition);       
             // Set the motor into the mode that uses the encoder to keep
             // track of the position
             motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            // Set the target position by converting the distance into motor
-            // position values
-            motor.setTargetPosition(targetPosition);            
+                 
         }
         
         telemetry.addData("motor1",motor1.getCurrentPosition());

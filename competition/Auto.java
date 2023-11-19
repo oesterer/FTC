@@ -30,6 +30,7 @@ public class Auto extends DriveRobot {
     @Override public void runOpMode() throws InterruptedException {
         setParams();
         initRobot();
+        grab();
 
         telemetry.addData("distance", getDistance());
         telemetry.addData("Mode", name+" mirror:"+mirror+" back:"+back);
@@ -77,7 +78,7 @@ Robot        2
                 }
             // Navigate to parking area
             if(back) {
-                park(-520, 0, 90*mirror);
+                park(-470, 0, 90*mirror);
             } else {
                 park(0, 0, -90*mirror);
             }
@@ -85,7 +86,7 @@ Robot        2
             telemetry.addData("Status", "Aligning with pos #1");
             telemetry.update();            
             // Move sideways to align with position 1
-            strafe(320*mirror);
+            strafe(300*mirror);
             // Is there a team-prop straight ahead? (position 1)
             if(seeBlock(600)) {
                 telemetry.addData("Status", "Detected prop at #1");
@@ -124,7 +125,7 @@ Robot        2
                 if(back) {
                     park(0,-680*mirror,0);
                 } else {
-                    park(0, 0, 180);
+                    park(0, 0, 178);
                 }
             }
         }
@@ -140,8 +141,19 @@ Robot        2
         if(driveDistance!=0)drive(driveDistance);
         if(strafeDistance!=0)strafe(strafeDistance);
         if(turnAmount!=0)turn(turnAmount);
-        driveToDistance(300);
+        
+        //drive(200);
+        //driveToDistance(700);
+        //strafe(500*mirror);
+        driveToDistance(420);
+        
         telemetry.addData("Status", "Parked");
-        telemetry.update();         
+        telemetry.update();   
+        wristUp();
+        sleep(2000);
+        release();
+        sleep(2000);
+        telemetry.addData("Status", "Dropped Pixel");
+        telemetry.update(); 
     }    
 }
