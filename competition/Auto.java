@@ -18,10 +18,18 @@ public class Auto extends DriveRobot {
     // starting the autonomous run
     String name  = "Auto";
 
+    // The results of the randomozation, displayed as an int
+    // 0 - Unknown
+    // 1 - Parking Position 1
+    // 2 - Parking Position 2
+    // 3 - Parking Position 3
+    int randomization = 0;
+    
     public void setParams() {
         mirror   = 1;
         back = true;
-        name  = "Auto";        
+        name  = "Auto";    
+        randomization = 0;
     }
 
     /**
@@ -34,6 +42,7 @@ public class Auto extends DriveRobot {
 
         telemetry.addData("distance", getDistance());
         telemetry.addData("Mode", name+" mirror:"+mirror+" back:"+back);
+        telemetry.addData("Randomization", randomization);
         telemetry.addData(">", "Press Start");
         telemetry.update();  
 
@@ -66,10 +75,11 @@ Robot        2
         if(seeBlock(700)) {
             telemetry.addData("Status", "Detected prop at #2");
             telemetry.update(); 
+            randomization = 2;
             // Move a bit to the side to avoid prop    
             strafe(100*mirror);
             // Drive to line
-            drive(540);/* At position 2 now (the one directly in front of start)*/
+            drive(590);/* At position 2 now (the one directly in front of start)*/
             // Drop pixel by backing up
             if(back) {
                     drive(-200);
@@ -85,6 +95,7 @@ Robot        2
         } else {
             telemetry.addData("Status", "Aligning with pos #1");
             telemetry.update();            
+            randomization = 1;
             // Move sideways to align with position 1
             strafe(300*mirror);
             // Is there a team-prop straight ahead? (position 1)
@@ -101,7 +112,7 @@ Robot        2
                 }
                 // Navigate to parking area
                 if(back) {
-                    park(-330, 0, 90*mirror);
+                    park(-310, 0, 90*mirror);
                 } else {
                     park(0, 0, -90*mirror);
                 }                
@@ -110,6 +121,7 @@ Robot        2
                 telemetry.update();                
                 // Noting detected in pos 1 or 2 -> has to be in pos 3
                 // Drive to align with pos 3
+                randomization = 3;
                 drive(390);
                 // Turn left
                 turn(90*mirror);
@@ -142,18 +154,30 @@ Robot        2
         if(strafeDistance!=0)strafe(strafeDistance);
         if(turnAmount!=0)turn(turnAmount);
         
-        //drive(200);
-        //driveToDistance(700);
-        //strafe(500*mirror);
-        driveToDistance(420);
+        if(back) {
+            if(mirror<0){
+                strafe(-130+getDistanceR());
+            } else {
+                strafe(-130+getDistanceL());
+            }
+            drive(1600);
+            strafe(mirror*600);
+        }
+
+        extendLift();
+        sleep(2000);
+        stopLift();
+        driveToDistance(275);
         
-        telemetry.addData("Status", "Parked");
+        telemetry.addData("Status", "Dropping Pixel");
         telemetry.update();   
         wristUp();
-        sleep(2000);
+        sleep(1000);
         release();
-        sleep(2000);
-        telemetry.addData("Status", "Dropped Pixel");
+        sleep(1000);
+        drive(-30);
+
+        telemetry.addData("Status", "Parked");
         telemetry.update(); 
     }    
 }
