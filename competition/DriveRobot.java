@@ -29,6 +29,8 @@ public class DriveRobot extends LinearOpMode
     boolean    wristUp=false;
     boolean    clawClosed=false;
     DistanceSensor distanceSensor = null;
+    DistanceSensor distanceSensorL = null;
+    DistanceSensor distanceSensorR = null;
     IMU imu = null;
  
     void initRobot() {
@@ -50,6 +52,8 @@ public class DriveRobot extends LinearOpMode
         liftR    = hardwareMap.get(DcMotor.class, "liftR");
         liftL    = hardwareMap.get(DcMotor.class, "liftL");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
+        distanceSensorL = hardwareMap.get(DistanceSensor.class, "distanceSensorL");
+        distanceSensorR = hardwareMap.get(DistanceSensor.class, "distanceSensorR");
 
         motor1.setDirection(DcMotor.Direction.REVERSE);
         motor2.setDirection(DcMotor.Direction.FORWARD);
@@ -120,7 +124,8 @@ public class DriveRobot extends LinearOpMode
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("distance", getDistance());
-            telemetry.addData("wrist", wrist.getPosition());
+            telemetry.addData("distanceL", getDistanceL());
+            telemetry.addData("distanceR", getDistanceR());
 
             if(gamepad1.dpad_right) {
                 if(gamepad1.right_bumper) {
@@ -146,8 +151,12 @@ public class DriveRobot extends LinearOpMode
             }
 
             if (gamepad1.dpad_down) {
-                turn(90);
-                turn(90);
+                turn(180);
+                //turn(90);
+            }
+
+            if (gamepad1.a) {
+                    strafe(-130+getDistanceR());
             }
 
             if(gamepad2.b) {
@@ -253,6 +262,14 @@ public class DriveRobot extends LinearOpMode
             motor3.setPower(-1*direction*power);
             motor4.setPower(1*direction*power);
             currentAngle=getAngle();
+
+            // Adjust angle for angles greater than 180 or less than -180
+            if(direction>0 && currentAngle<-10) {
+                currentAngle=360+currentAngle;
+            } else if(direction<0 && currentAngle>10) {
+                currentAngle=-360+currentAngle;
+            }
+            
             remainingAngle=Math.abs(targetAngle-currentAngle);
         } 
 
@@ -301,7 +318,7 @@ public class DriveRobot extends LinearOpMode
 
     double getAngle() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        return(orientation.getYaw(AngleUnit.DEGREES));
+        return orientation.getYaw(AngleUnit.DEGREES);
     }
 
     void loadDrone() {
@@ -333,6 +350,12 @@ public class DriveRobot extends LinearOpMode
 
     double getDistance() {
         return distanceSensor.getDistance(DistanceUnit.MM);
+    }   
+    int getDistanceL() {
+        return (int)distanceSensorL.getDistance(DistanceUnit.MM);
+    }   
+    int getDistanceR() {
+        return (int)distanceSensorR.getDistance(DistanceUnit.MM);
     }   
 
     boolean seeBlock(int distance) {
