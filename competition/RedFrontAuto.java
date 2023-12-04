@@ -8,6 +8,7 @@ public class RedFrontAuto extends Auto {
     public void setParams() {
         mirror   = 1;
         back = false;
-        name  = "Red Front";        
+        name  = "Red Front";
+        leftField = false;                   
     }    
 }

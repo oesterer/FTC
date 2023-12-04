@@ -2,13 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 public class Auto extends DriveRobot {
 
-    boolean debug=true;
-
-    int right = 1;
-    int left = 2;
-    int center =3;
-
-    // The 4 attributes mirror, back, leftField and name are set by the 
+    // The 3 attributes mirror, back and name are set by the 
     // constructor of the sub class.
 
     // Should truns and stafe movements be mirrored?  1 for normal,
@@ -20,25 +14,14 @@ public class Auto extends DriveRobot {
     // the pixel
     boolean back = true;
 
-    // Left or right field? (red is right, blue is left)
-    boolean leftField = false;
-
     // Name of the position, used to display on the screen before
     // starting the autonomous run
     String name  = "Auto";
 
-    // The results of the randomozation, displayed as an int
-    // 0 - Unknown
-    // 1 - Parking Position 1
-    // 2 - Parking Position 2
-    // 3 - Parking Position 3
-    int randomization = 0;
-    
     public void setParams() {
         mirror   = 1;
         back = true;
-        name  = "Auto";    
-        randomization = 0;
+        name  = "Auto";        
     }
 
     /**
@@ -50,8 +33,7 @@ public class Auto extends DriveRobot {
         grab();
 
         telemetry.addData("distance", getDistance());
-        telemetry.addData("Mode", name+" mirror:"+mirror+" back:"+back+" left:"+leftField);
-        telemetry.addData("Randomization", randomization);
+        telemetry.addData("Mode", name+" mirror:"+mirror+" back:"+back);
         telemetry.addData(">", "Press Start");
         telemetry.update();  
 
@@ -84,11 +66,10 @@ Robot        2
         if(seeBlock(700)) {
             telemetry.addData("Status", "Detected prop at #2");
             telemetry.update(); 
-            randomization = center;
             // Move a bit to the side to avoid prop    
             strafe(100*mirror);
             // Drive to line
-            drive(590);/* At position 2 now (the one directly in front of start)*/
+            drive(540);/* At position 2 now (the one directly in front of start)*/
             // Drop pixel by backing up
             if(back) {
                     drive(-200);
@@ -104,12 +85,10 @@ Robot        2
         } else {
             telemetry.addData("Status", "Aligning with pos #1");
             telemetry.update();            
-           
             // Move sideways to align with position 1
             strafe(300*mirror);
             // Is there a team-prop straight ahead? (position 1)
             if(seeBlock(600)) {
-                randomization = mirror == 1? left:right;
                 telemetry.addData("Status", "Detected prop at #1");
                 telemetry.update();                
                 // Drive to line
@@ -122,7 +101,7 @@ Robot        2
                 }
                 // Navigate to parking area
                 if(back) {
-                    park(-310, 0, 90*mirror);
+                    park(-330, 0, 90*mirror);
                 } else {
                     park(0, 0, -90*mirror);
                 }                
@@ -131,7 +110,6 @@ Robot        2
                 telemetry.update();                
                 // Noting detected in pos 1 or 2 -> has to be in pos 3
                 // Drive to align with pos 3
-                randomization = mirror == 1? right:left;
                 drive(390);
                 // Turn left
                 turn(90*mirror);
@@ -164,69 +142,16 @@ Robot        2
         if(strafeDistance!=0)strafe(strafeDistance);
         if(turnAmount!=0)turn(turnAmount);
         
-
-        if(leftField) {
-            telemetry.addData("Status", "Left wall, strafe "+(-150+getDistanceL()));
-            telemetry.update();
-            if(debug)sleep(2000);
-            strafe(-150+getDistanceL());
-        } else {
-            telemetry.addData("Status", "Right wall, strafe "+(150-getDistanceR()));
-            telemetry.update();
-            if(debug)sleep(2000);            
-            strafe(150-getDistanceR());
-        }        
+        drive(200);
+        driveToDistance(700);
+        strafe(500*mirror);
+        driveToDistance(420);
         
-        if(back) {
-            drive(1600);
-        } else {
-            drive(50);
-        } 
-
-        // Distance for center
-        int dist = 700;
-        // Difference from center for left or right
-        int delta = 150; 
-        if (leftField){
-            if(randomization == left) {
-                dist -= delta;
-            } else if(randomization == right) {
-                dist += delta;
-            }   
-        } else {
-            if(randomization == right) {
-                dist -= delta;
-            } else if(randomization == left) {
-                dist += delta;
-            }                     
-        }
-         
-        if(leftField) {
-            telemetry.addData("Status", "Left field, strafe "+(-1*dist));
-            telemetry.update();
-            if(debug)sleep(2000);            
-            strafe(-1*dist);
-        } else {
-            telemetry.addData("Status", "Right field, strafe "+(dist));
-            telemetry.update();
-            if(debug)sleep(2000); 
-            strafe(dist);
-        }
-        
-        extendLift();
-        sleep(1500);
-        stopLift();
-        driveToDistance(255);
-        
-        telemetry.addData("Status", "Dropping Pixel");
+        telemetry.addData("Status", "Parked");
         telemetry.update();   
         wristUp();
-        sleep(1000);
+        sleep(2000);
         release();
-        sleep(500);
-        drive(-30);
-
-        telemetry.addData("Status", "Parked");
-        telemetry.update(); 
+        sleep(2000);
     }    
 }

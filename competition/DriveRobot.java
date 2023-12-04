@@ -405,6 +405,9 @@ public class DriveRobot extends LinearOpMode
 
             int currentPosition=motor1.getCurrentPosition();
             telemetry.addData("motor1",currentPosition);
+            telemetry.addData("distance", getDistance());
+            telemetry.addData("distanceL", getDistanceL());
+            telemetry.addData("distanceR", getDistanceR());
             telemetry.update();
     
             // Determine the closest distance to either starting position

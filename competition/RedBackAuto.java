@@ -9,6 +9,7 @@ public class RedBackAuto extends BlueBackAuto {
     public void setParams() {
         mirror   = -1;
         back = true;
-        name  = "Red Back";        
+        name  = "Red Back";
+        leftField = false;        
     }
 }

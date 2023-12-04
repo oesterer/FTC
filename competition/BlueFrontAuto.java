@@ -11,6 +11,7 @@ public class BlueFrontAuto extends Auto {
     public void setParams() {
         mirror   = -1;
         back = false;
-        name  = "Blue Front";        
+        name  = "Blue Front";
+        leftField = true;        
     } 
 }
