@@ -82,8 +82,9 @@ Robot        2
         // Is there a team-prop straight ahead? (position 2)
         drive(200);
         if(seeBlock(700)) {
-            telemetry.addData("Status", "Detected prop at #2");
-            telemetry.update(); 
+            telemetry.addData("Status", "Detected prop at #2 center");
+            telemetry.update();
+            if(debug)sleep(1000);  
             randomization = center;
             // Move a bit to the side to avoid prop    
             strafe(100*mirror);
@@ -109,9 +110,10 @@ Robot        2
             strafe(300*mirror);
             // Is there a team-prop straight ahead? (position 1)
             if(seeBlock(600)) {
-                randomization=(mirror==1)?left:right;
-                telemetry.addData("Status", "Detected prop at #1");
-                telemetry.update();                
+                randomization=(mirror==1)?right:left;
+                telemetry.addData("Status", "Detected prop at #1 "+(mirror==1)?"right":"left");
+                telemetry.update();
+                if(debug)sleep(1000);                 
                 // Drive to line
                 drive(350);/* At the edge of position 1 now */
                 // Drop pixel by backing up
@@ -127,11 +129,12 @@ Robot        2
                     park(0, 0, -90*mirror);
                 }                
             } else {
-                telemetry.addData("Status", "Dropping pixel at #3");
-                telemetry.update();                
+                randomization=(mirror==1)?left:right;
+                telemetry.addData("Status", "Dropping pixel at #3 "+(mirror==1)?"left":"right");
+                telemetry.update();
+                if(debug)sleep(1000);                 
                 // Noting detected in pos 1 or 2 -> has to be in pos 3
                 // Drive to align with pos 3
-                randomization=(mirror==1)?right:left;
                 drive(390);
                 // Turn left
                 turn(90*mirror);
@@ -164,6 +167,7 @@ Robot        2
         if(strafeDistance!=0)strafe(strafeDistance);
         if(turnAmount!=0)turn(turnAmount);
         
+        // Hug the wall
         if(leftField) {
             telemetry.addData("Status", "Left wall, strafe "+(150-getDistanceL()));
             telemetry.update();
@@ -176,6 +180,7 @@ Robot        2
             strafe(-150+getDistanceR());
         }        
         
+        // Drive to the position from which to strafe for pixel drop
         if(back) {
             drive(1600);
         } else {
