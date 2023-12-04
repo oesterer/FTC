@@ -91,10 +91,10 @@ Robot        2
             drive(590);/* At position 2 now (the one directly in front of start)*/
             // Drop pixel by backing up
             if(back) {
-                    drive(-200);
-                } else {
-                    drive(-400);
-                }
+                drive(-200);
+            } else {
+                drive(-400);
+            }
             // Navigate to parking area
             if(back) {
                 park(-470, 0, 90*mirror);
@@ -109,7 +109,7 @@ Robot        2
             strafe(300*mirror);
             // Is there a team-prop straight ahead? (position 1)
             if(seeBlock(600)) {
-                randomization = mirror == 1? left:right;
+                randomization=(mirror==1)?left:right;
                 telemetry.addData("Status", "Detected prop at #1");
                 telemetry.update();                
                 // Drive to line
@@ -131,7 +131,7 @@ Robot        2
                 telemetry.update();                
                 // Noting detected in pos 1 or 2 -> has to be in pos 3
                 // Drive to align with pos 3
-                randomization = mirror == 1? right:left;
+                randomization=(mirror==1)?right:left;
                 drive(390);
                 // Turn left
                 turn(90*mirror);
@@ -164,17 +164,16 @@ Robot        2
         if(strafeDistance!=0)strafe(strafeDistance);
         if(turnAmount!=0)turn(turnAmount);
         
-
         if(leftField) {
-            telemetry.addData("Status", "Left wall, strafe "+(-150+getDistanceL()));
+            telemetry.addData("Status", "Left wall, strafe "+(150-getDistanceL()));
             telemetry.update();
             if(debug)sleep(2000);
-            strafe(-150+getDistanceL());
+            strafe(150-getDistanceL());
         } else {
-            telemetry.addData("Status", "Right wall, strafe "+(150-getDistanceR()));
+            telemetry.addData("Status", "Right wall, strafe "+(-150+getDistanceR()));
             telemetry.update();
             if(debug)sleep(2000);            
-            strafe(150-getDistanceR());
+            strafe(-150+getDistanceR());
         }        
         
         if(back) {
@@ -202,21 +201,21 @@ Robot        2
         }
          
         if(leftField) {
-            telemetry.addData("Status", "Left field, strafe "+(-1*dist));
+            telemetry.addData("Status", "Left field, strafe "+(dist));
             telemetry.update();
             if(debug)sleep(2000);            
-            strafe(-1*dist);
+            strafe(dist);
         } else {
-            telemetry.addData("Status", "Right field, strafe "+(dist));
+            telemetry.addData("Status", "Right field, strafe "+(-1*dist));
             telemetry.update();
             if(debug)sleep(2000); 
-            strafe(dist);
+            strafe(-1*dist);
         }
         
         extendLift();
         sleep(1500);
         stopLift();
-        driveToDistance(255);
+        driveToDistance(245);
         
         telemetry.addData("Status", "Dropping Pixel");
         telemetry.update();   

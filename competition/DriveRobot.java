@@ -72,7 +72,6 @@ public class DriveRobot extends LinearOpMode
         initRobot();
         waitForStart();
         
-
         while (opModeIsActive())
         {
             double motor1Power = 0;
@@ -152,12 +151,11 @@ public class DriveRobot extends LinearOpMode
 
             if (gamepad1.dpad_down) {
                 turn(180);
-                //turn(90);
             }
 
-            if (gamepad1.a) {
-                    strafe(-130+getDistanceR());
-            }
+            //if (gamepad1.a) {
+            //        strafe(-130+getDistanceR());
+            //}
 
             if(gamepad2.b) {
                 if(clawClosed) {
