@@ -2,7 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 public class Auto extends DriveRobot {
 
-    boolean debug=true;
+    boolean debug=false;
+    int debugSleep=1000;
 
     int right = 1;
     int left = 2;
@@ -111,7 +112,7 @@ Robot        2
             // Is there a team-prop straight ahead? (position 1)
             if(seeBlock(600)) {
                 randomization=(mirror==1)?right:left;
-                telemetry.addData("Status", "Detected prop at #1 "+(mirror==1)?"right":"left");
+                telemetry.addData("Status", "Detected prop at #1 "+((mirror==1)?"right":"left"));
                 telemetry.update();
                 if(debug)sleep(1000);                 
                 // Drive to line
@@ -130,7 +131,7 @@ Robot        2
                 }                
             } else {
                 randomization=(mirror==1)?left:right;
-                telemetry.addData("Status", "Dropping pixel at #3 "+(mirror==1)?"left":"right");
+                telemetry.addData("Status", "Dropping pixel at #3 "+((mirror==1)?"left":"right"));
                 telemetry.update();
                 if(debug)sleep(1000);                 
                 // Noting detected in pos 1 or 2 -> has to be in pos 3
@@ -171,12 +172,12 @@ Robot        2
         if(leftField) {
             telemetry.addData("Status", "Left wall, strafe "+(150-getDistanceL()));
             telemetry.update();
-            if(debug)sleep(2000);
+            if(debug)sleep(debugSleep);
             strafe(150-getDistanceL());
         } else {
             telemetry.addData("Status", "Right wall, strafe "+(-150+getDistanceR()));
             telemetry.update();
-            if(debug)sleep(2000);            
+            if(debug)sleep(debugSleep);            
             strafe(-150+getDistanceR());
         }        
         
@@ -184,13 +185,13 @@ Robot        2
         if(back) {
             drive(1600);
         } else {
-            drive(50);
+            drive(400);
         } 
 
         // Distance for center
-        int dist = 700;
+        int dist = 550;
         // Difference from center for left or right
-        int delta = 150; 
+        int delta = 140; 
         if (leftField){
             if(randomization == left) {
                 dist -= delta;
@@ -208,17 +209,17 @@ Robot        2
         if(leftField) {
             telemetry.addData("Status", "Left field, strafe "+(dist));
             telemetry.update();
-            if(debug)sleep(2000);            
+            if(debug)sleep(debugSleep);            
             strafe(dist);
         } else {
             telemetry.addData("Status", "Right field, strafe "+(-1*dist));
             telemetry.update();
-            if(debug)sleep(2000); 
+            if(debug)sleep(debugSleep); 
             strafe(-1*dist);
         }
         
         extendLift();
-        sleep(1500);
+        sleep(1000);
         stopLift();
         driveToDistance(245);
         
@@ -228,7 +229,7 @@ Robot        2
         sleep(1000);
         release();
         sleep(500);
-        drive(-30);
+        drive(-60);
 
         telemetry.addData("Status", "Parked");
         telemetry.update(); 

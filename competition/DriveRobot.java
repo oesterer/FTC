@@ -142,7 +142,7 @@ public class DriveRobot extends LinearOpMode
                 }
             }
 
-            if(gamepad2.dpad_up && launcher.getPosition() == 1){
+            if(gamepad2.dpad_up){
                 launchDrone();
                 sleep(1000);
                 loadDrone();
@@ -241,6 +241,7 @@ public class DriveRobot extends LinearOpMode
     
     void turn(int angle) {
         imu.resetYaw();
+        sleep(50);
         double currentAngle=getAngle();
         int direction=0;
         double targetAngle=currentAngle+angle;
@@ -320,11 +321,11 @@ public class DriveRobot extends LinearOpMode
     }
 
     void loadDrone() {
-        launcher.setPosition(1);
+        launcher.setPosition(0.25);
     }
 
     void launchDrone() {
-        launcher.setPosition(0);
+        launcher.setPosition(0.35);
         isPlaneLaunched = true;
     }
 
