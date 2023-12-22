@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name="BlueBackAuto", group ="Concept")
+@Autonomous(name="BlueBackAuto", group ="Concept", preselectTeleOp="DriveRobot")
 public class BlueBackAuto extends Auto {
 
     

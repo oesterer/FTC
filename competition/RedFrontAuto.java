@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name="RedFrontAuto", group ="Concept")
+@Autonomous(name="RedFrontAuto", group ="Concept", preselectTeleOp="DriveRobot")
 public class RedFrontAuto extends Auto {
 
     public void setParams() {

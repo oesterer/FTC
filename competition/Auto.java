@@ -80,10 +80,12 @@ Robot        2
      * required for BLUE-BACK.
      */
     void auto() {
+        // wristUp();
         // Is there a team-prop straight ahead? (position 2)
         drive(200);
         if(seeBlock(700)) {
             telemetry.addData("Status", "Detected prop at #2 center");
+            wristUp();
             telemetry.update();
             if(debug)sleep(1000);  
             randomization = center;
@@ -105,12 +107,14 @@ Robot        2
             }
         } else {
             telemetry.addData("Status", "Aligning with pos #1");
+            // wristUp();
             telemetry.update();            
            
             // Move sideways to align with position 1
             strafe(300*mirror);
             // Is there a team-prop straight ahead? (position 1)
             if(seeBlock(600)) {
+                wristUp();
                 randomization=(mirror==1)?right:left;
                 telemetry.addData("Status", "Detected prop at #1 "+((mirror==1)?"right":"left"));
                 telemetry.update();
@@ -132,6 +136,7 @@ Robot        2
             } else {
                 randomization=(mirror==1)?left:right;
                 telemetry.addData("Status", "Dropping pixel at #3 "+((mirror==1)?"left":"right"));
+                wristUp();
                 telemetry.update();
                 if(debug)sleep(1000);                 
                 // Noting detected in pos 1 or 2 -> has to be in pos 3
@@ -140,7 +145,7 @@ Robot        2
                 // Turn left
                 turn(90*mirror);
                 // Drive to the line
-                drive(440); /* at pos 3 now */
+                drive(450); /* at pos 3 now */
                 // Drop pixel by backing up
                 if(back) {
                     drive(-200);
@@ -219,17 +224,22 @@ Robot        2
         }
         
         extendLift();
-        sleep(1000);
+        sleep(1500);
         stopLift();
-        driveToDistance(245);
+        driveToDistance(300);
         
         telemetry.addData("Status", "Dropping Pixel");
         telemetry.update();   
-        wristUp();
-        sleep(1000);
+        // wristUp();
+        
         release();
         sleep(500);
         drive(-60);
+        if(leftField) {
+            strafe(1100-dist);
+        } else {
+            strafe(-1*(1100-dist));
+        }
 
         telemetry.addData("Status", "Parked");
         telemetry.update(); 

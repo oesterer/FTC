@@ -1,4 +1,5 @@
 package org.firstinspires.ftc.teamcode;
+//https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
 import com.qualcomm.robotcore.eventloop.opmode.*;
 import org.firstinspires.ftc.robotcore.external.navigation.*;
@@ -19,15 +20,18 @@ public class DriveRobot extends LinearOpMode
     DcMotor    motor3   = null;
     DcMotor    motor4   = null;
     Servo      launcher = null;
-    Servo      claw1    = null;
-    Servo      claw2    = null;
+    Servo      claw    = null;
     Servo      wrist    = null;
     DcMotor    liftR    = null;
     DcMotor    liftL    = null;
     boolean    isLiftMoving = false;
     boolean    isPlaneLaunched = false;  
     boolean    wristUp=false;
+    boolean    wristHigh=false;
     boolean    clawClosed=false;
+    String     wristStatus="void";
+    String     clawStatus="void";
+    String     action="void";
     DistanceSensor distanceSensor = null;
     DistanceSensor distanceSensorL = null;
     DistanceSensor distanceSensorR = null;
@@ -46,8 +50,8 @@ public class DriveRobot extends LinearOpMode
         motors[3]=(motor4);
 
         launcher = hardwareMap.get(Servo.class, "launcher");
-        claw1    = hardwareMap.get(Servo.class, "claw1");
-        claw2    = hardwareMap.get(Servo.class, "claw2");
+        claw    = hardwareMap.get(Servo.class, "claw");
+      
         wrist    = hardwareMap.get(Servo.class, "wrist");
         liftR    = hardwareMap.get(DcMotor.class, "liftR");
         liftL    = hardwareMap.get(DcMotor.class, "liftL");
@@ -63,7 +67,7 @@ public class DriveRobot extends LinearOpMode
         // Move drone servo to loaded position
         loadDrone();
 
-        telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
+        telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
         telemetry.addData(">", "Press Start");
         telemetry.update();        
     }
@@ -83,9 +87,9 @@ public class DriveRobot extends LinearOpMode
             double sideScale=1;
             double turnScale=0.75;
 
-            double driveInput = gamepad1.right_stick_y;
-            double sideInput  = gamepad1.right_stick_x;
-            double turnInput  = gamepad1.left_stick_x;
+            double driveInput = gamepad1.left_stick_y;
+            double sideInput  = gamepad1.left_stick_x;
+            double turnInput  = gamepad1.right_stick_x;
 
             motor1Power = driveScale*driveInput
                           +sideScale*sideInput
@@ -113,20 +117,35 @@ public class DriveRobot extends LinearOpMode
             motor2.setPower(motor2Power/scale);
             motor3.setPower(motor3Power/scale);
             motor4.setPower(motor4Power/scale);
+            
+            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+            
+            telemetry.addData("!","==HEADS_UP==");
+            telemetry.addData("","");
+            
+            telemetry.addData("ACTION", action);
+            telemetry.addData("HEADING", "%.2f Deg.", orientation.getYaw(AngleUnit.DEGREES));
+            telemetry.addData("WRIST", wristStatus);
+            telemetry.addData("CLAW", clawStatus);
+            
+            telemetry.addData("","");
+            telemetry.addData("!","==DIAGNOSTICS==");
+            telemetry.addData("","");
 
             telemetry.addData("motor1", motor1Power/scale);
             telemetry.addData("motor2", motor2Power/scale);
             telemetry.addData("motor3", motor3Power/scale);
             telemetry.addData("motor4", motor4Power/scale);
             
-            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
+            telemetry.addData("claw", Math.round(claw.getPosition()*1000) + " (" + clawStatus + ")");
+            telemetry.addData("wrist", Math.round(wrist.getPosition()*1000) + " (" + wristStatus + ")");
             telemetry.addData("distance", getDistance());
             telemetry.addData("distanceL", getDistanceL());
             telemetry.addData("distanceR", getDistanceR());
 
-            if(gamepad1.dpad_right) {
+          /*  if(gamepad1.dpad_right) {
                 if(gamepad1.right_bumper) {
                     turn(-15);
                 } else {
@@ -141,102 +160,120 @@ public class DriveRobot extends LinearOpMode
                     turn(90);
                 }
             }
+            */
 
             if(gamepad2.dpad_up){
                 launchDrone();
                 sleep(1000);
                 loadDrone();
-                telemetry.addData("Action", "Launch Drone");
+                action="FIRING DRONE";
             }
 
             if (gamepad1.dpad_down) {
                 turn(180);
+                sleep(200);
             }
 
             //if (gamepad1.a) {
             //        strafe(-130+getDistanceR());
             //}
+            if(gamepad1.dpad_up){
+                extendLift();
+                sleep(1000);
+                stopLift();
+                driveToDistance(300);
+                wristDown();
+                release();
+                drive(-70);
+                contractLift();
+                sleep(1000);
+                stopLift();
+            }
 
             if(gamepad2.b) {
                 if(clawClosed) {
                     release();
                     clawClosed=false;
-                    telemetry.addData("Action", "Release Claw");
+                    clawStatus="Claw Open";
+                    action="OPEN CLAW";
                 } else {
                     grab();
                     clawClosed=true;
-                    telemetry.addData("Action", "Close Claw");
+                    clawStatus="Claw Holding";
+                    action="CLOSE CLAW";
                 }
                 sleep(500);
             }
             
-            if (gamepad2.x) {
-                if(wrist.getPosition() >= 0.64 && wrist.getPosition() <= 0.66) {
-                    wristUp();
-                    wristUp=true;
-                    telemetry.addData("Action", "Wrist Up");
+            if(gamepad2.y) {
+                if(Math.floor(wrist.getPosition()*1000) == 360) {
+                    wristDown();
+                    wristStatus="Wrist to Ground";
+                    action="WRIST GROUNDED";
                 } else {
-                    wristGrounded();
-                    telemetry.addData("Action", "Wrist Grounded");
+                    wristUp();
+                    wristStatus="Wrist to Board Angle";
+                    action="WRIST TO BOARD";
                 }
                 sleep(500);
             }
-
-            if(gamepad2.y) {
-                if(wristUp) {
-                    wristDown();
-                    wristUp=false;
-                    telemetry.addData("Action", "Wrist Down");
+            
+            if(gamepad2.x) {
+                if(!(Math.floor(wrist.getPosition()*1000) == 0)) {
+                    wristHigh();
+                    wristStatus="Wrist Up";
+                    action="WRIST UP";
                 } else {
                     wristUp();
-                    wristUp=true;
-                    telemetry.addData("Action", "Wrist Up");
+                    wristStatus="Wrist to Board Angle";
+                    action="WRIST TO BOARD";
                 }
                 sleep(500);
             }
             
             if(gamepad2.right_trigger>0.1) {
                 extendLift();
-                telemetry.addData("Action", "Lift Extend");
+                action="LIFT EXPAND";
             }
 
             if(gamepad2.left_trigger>0.1) {
                 contractLift();
-                telemetry.addData("Action", "Lift Contract");
+                action="LIFT CONTRACT";
             }
 
             if(isLiftMoving &&    
                gamepad2.left_trigger<=0.1 &&
                gamepad2.right_trigger<=0.1) {
                stopLift();
-               telemetry.addData("Action", "Lift Stop");
+               action="LIFT STOP";
             }
 
             telemetry.update();
+            action="NONE";
             sleep(10);
         }
     }
 
     void release() {
-        claw1.setPosition(0.2);
-        claw2.setPosition(0.6);
+        claw.setPosition(0.5);
+        
     }
 
     void grab() {
-        claw1.setPosition(0);
-        claw2.setPosition(1);
+        claw.setPosition(1);
+        
     }
 
     void wristUp() {
-        wrist.setPosition(0.35);
+        wrist.setPosition(0.36);
     }
 
     void wristDown() {
-        wrist.setPosition(0.60);
+        wrist.setPosition(0.625);
     }
     
-    void wristGrounded() {
-        wrist.setPosition(0.65);
+    void wristHigh() {
+        wrist.setPosition(0);
     }
     
     void turn(int angle) {
@@ -321,11 +358,11 @@ public class DriveRobot extends LinearOpMode
     }
 
     void loadDrone() {
-        launcher.setPosition(0.25);
+        launcher.setPosition(0.35);
     }
 
     void launchDrone() {
-        launcher.setPosition(0.35);
+        launcher.setPosition(0.25);
         isPlaneLaunched = true;
     }
 
@@ -403,11 +440,14 @@ public class DriveRobot extends LinearOpMode
         do {
 
             int currentPosition=motor1.getCurrentPosition();
-            telemetry.addData("motor1",currentPosition);
+            telemetry.addData("motor1", currentPosition);
+            
+            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+            
+            telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("distance", getDistance());
             telemetry.addData("distanceL", getDistanceL());
             telemetry.addData("distanceR", getDistanceR());
-            telemetry.update();
     
             // Determine the closest distance to either starting position
             // or target. When close to start, we accelerate, when close to 

@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name="BlueFrontAuto", group ="Concept")
+@Autonomous(name="BlueFrontAuto", group ="Concept", preselectTeleOp="DriveRobot")
 public class BlueFrontAuto extends Auto {
 
     // Similar to BlueBack but strafe and turns are mirrored,
