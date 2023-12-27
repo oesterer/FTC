@@ -120,17 +120,17 @@ public class DriveRobot extends LinearOpMode
             
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
             
-            telemetry.addData("!","==HEADS_UP==");
-            telemetry.addData("","");
+            telemetry.addLine("==HEADS_UP==");
+            telemetry.addLine();
             
             telemetry.addData("ACTION", action);
             telemetry.addData("HEADING", "%.2f Deg.", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("WRIST", wristStatus);
             telemetry.addData("CLAW", clawStatus);
             
-            telemetry.addData("","");
-            telemetry.addData("!","==DIAGNOSTICS==");
-            telemetry.addData("","");
+            telemetry.addLine();
+            telemetry.addLine("==DIAGNOSTICS==");
+            telemetry.addLine();
 
             telemetry.addData("motor1", motor1Power/scale);
             telemetry.addData("motor2", motor2Power/scale);
