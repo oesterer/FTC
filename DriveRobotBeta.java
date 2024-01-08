@@ -309,6 +309,17 @@ public class DriveRobotBeta extends LinearOpMode
         }        
     } 
 
+
+    public class testRunner {
+        
+        void square(int distance) {
+            for (int i = 0; i < 4; i++) {
+                drive(distance);
+                turn(90);
+            }
+        }
+    }
+
     public void strafe(int distance) {
         // Constants to use when driving the robot
 
