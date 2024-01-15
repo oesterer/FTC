@@ -24,9 +24,7 @@ public class DriveRobot extends LinearOpMode
     Servo      launcher = null;
     Servo      claw    = null;
     Servo      wrist    = null;
-    Servo      hangingServoL = null;
-    //Servo      hangingServoR = null;
-    DcMotor    liftR    = null;
+    Servo      hangingServoL = null;    DcMotor    liftR    = null;
     DcMotor    liftL    = null;
     boolean    isLiftMoving = false;
     boolean    isHangerMoving = false;
@@ -63,7 +61,7 @@ public class DriveRobot extends LinearOpMode
         wrist    = hardwareMap.get(Servo.class, "wrist");
 
         hangingServoL   = hardwareMap.get(Servo.class, "hangingServoL");
-        //hangingServoR   = hardwareMap.get(Servo.class, "hangingServoR");
+        
         
         liftR    = hardwareMap.get(DcMotor.class, "liftR");
         liftL    = hardwareMap.get(DcMotor.class, "liftL");
