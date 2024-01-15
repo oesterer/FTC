@@ -19,12 +19,15 @@ public class DriveRobot extends LinearOpMode
     DcMotor    motor2   = null;
     DcMotor    motor3   = null;
     DcMotor    motor4   = null;
+    DcMotor    hangerL  = null;
+    DcMotor    hangerR  = null;
     Servo      launcher = null;
     Servo      claw    = null;
     Servo      wrist    = null;
     DcMotor    liftR    = null;
     DcMotor    liftL    = null;
     boolean    isLiftMoving = false;
+    boolean    isHangerMoving = false;
     boolean    isPlaneLaunched = false;  
     boolean    wristUp=false;
     boolean    wristHigh=false;
@@ -44,6 +47,8 @@ public class DriveRobot extends LinearOpMode
         motor2  = hardwareMap.get(DcMotor.class, "motor2");
         motor3  = hardwareMap.get(DcMotor.class, "motor3");
         motor4  = hardwareMap.get(DcMotor.class, "motor4");
+        hangerL  = hardwareMap.get(DcMotor.class, "hangerL");
+        hangerR  = hardwareMap.get(DcMotor.class, "hangerR");
         motors[0]=(motor1);
         motors[1]=(motor2);
         motors[2]=(motor3);
@@ -169,6 +174,13 @@ public class DriveRobot extends LinearOpMode
                 action="FIRING DRONE";
             }
 
+            if(gamepad1.a){
+                hangerDown();
+            }
+            if(gamepad1.b){
+                hangerRaise();
+            }
+
             if (gamepad1.dpad_down) {
                 turn(180);
                 sleep(200);
@@ -246,6 +258,12 @@ public class DriveRobot extends LinearOpMode
                gamepad2.right_trigger<=0.1) {
                stopLift();
                action="LIFT STOP";
+            }
+
+            if(isHangerMoving &&
+            !gamepad1.a &&
+            !gamepad1.b) {
+               stopHanger();
             }
 
             telemetry.update();
@@ -365,6 +383,26 @@ public class DriveRobot extends LinearOpMode
         launcher.setPosition(0.25);
         isPlaneLaunched = true;
     }
+
+    void hangerDown() {
+        hangerL.setPower(.3);
+        hangerR.setPower(-.3);
+        isHangerMoving = true; 
+    }
+
+    void hangerRaise() {
+        hangerL.setPower(-.75);
+        hangerR.setPower(.75);
+        isHangerMoving = true; 
+
+    }
+
+     void stopHanger() {
+        hangerL.setPower(0);
+        hangerR.setPower(0);
+        isHangerMoving = false;
+    }
+
 
     void extendLift() {
         liftL.setPower(.85);
