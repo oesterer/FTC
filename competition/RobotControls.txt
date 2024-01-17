@@ -1,10 +1,16 @@
 // Claw Controls
 
 B             claw (open/close)
-Y             arm (up/down)
+Y             arm (board/down)
+X             arm (up/board)
+
 dpad_up       launch drone and reload
+
 right_trigger lift extend
 left_trigger  lift contract
+right_bumper  lower hangers (with slack)
+left_bumper   raise hangers (with slack)
+
 
 // Drive Controls
 
@@ -13,5 +19,10 @@ right_stick_x strafe
 left_stick_x  turn
 right_bumper  move slower
 
-dpad_right    turn 90 (15 with right_bumper)
-dpad_left     turn 90 (15 with right_bumper)
+dpad_right    turn 90 (15 with right_bumper) (disabled as of 1/16)
+dpad_left     turn 90 (15 with right_bumper) (disabled as of 1/16)
+dpad_down     turn 180 (not recommended for competition usage)
+
+
+A             lower hanger (just servo)
+B             raise hanger (just servo)
