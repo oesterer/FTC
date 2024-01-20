@@ -24,6 +24,8 @@ public class DriveRobot extends LinearOpMode
     Servo      launcher = null;
     Servo      claw    = null;
     Servo      wrist    = null;
+    Servo      hangingServoL = null;
+    //Servo      hangingServoR = null;
     DcMotor    liftR    = null;
     DcMotor    liftL    = null;
     boolean    isLiftMoving = false;
@@ -34,6 +36,7 @@ public class DriveRobot extends LinearOpMode
     boolean    clawClosed=false;
     String     wristStatus="void";
     String     clawStatus="void";
+    String     hangingStatus="void";
     String     action="void";
     DistanceSensor distanceSensor = null;
     DistanceSensor distanceSensorL = null;
@@ -58,6 +61,10 @@ public class DriveRobot extends LinearOpMode
         claw    = hardwareMap.get(Servo.class, "claw");
       
         wrist    = hardwareMap.get(Servo.class, "wrist");
+
+        hangingServoL   = hardwareMap.get(Servo.class, "hangingServoL");
+        //hangingServoR   = hardwareMap.get(Servo.class, "hangingServoR");
+        
         liftR    = hardwareMap.get(DcMotor.class, "liftR");
         liftL    = hardwareMap.get(DcMotor.class, "liftL");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
@@ -132,6 +139,7 @@ public class DriveRobot extends LinearOpMode
             telemetry.addData("HEADING", "%.2f Deg.", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("WRIST", wristStatus);
             telemetry.addData("CLAW", clawStatus);
+            telemetry.addData("HANGING", hangingStatus);
             
             telemetry.addLine();
             telemetry.addLine("==DIAGNOSTICS==");
@@ -146,6 +154,7 @@ public class DriveRobot extends LinearOpMode
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("claw", Math.round(claw.getPosition()*1000) + " (" + clawStatus + ")");
             telemetry.addData("wrist", Math.round(wrist.getPosition()*1000) + " (" + wristStatus + ")");
+            telemetry.addData("hanging servos", Math.round(hangingServoL.getPosition()*1000) + " (" + hangingStatus + ")");
             telemetry.addData("distance", getDistance());
             telemetry.addData("distanceL", getDistanceL());
             telemetry.addData("distanceR", getDistanceR());
@@ -265,6 +274,20 @@ public class DriveRobot extends LinearOpMode
             !gamepad1.b) {
                stopHanger();
             }
+
+            if(gamepad2.left_bumper) {
+                raiseHooks();
+                action="HOOKS RAISED";
+                hangingStatus="Hooks Raised";
+            }
+
+            if(gamepad2.right_bumper) {
+                lowerHooks();
+                action="HOOKS LOWERED";
+                hangingStatus="Hooks Lowered";
+            }
+
+
 
             telemetry.update();
             action="NONE";
@@ -407,19 +430,35 @@ public class DriveRobot extends LinearOpMode
     void extendLift() {
         liftL.setPower(.85);
         liftR.setPower(-.85);
+        hangerL.setPower(.90);
+        hangerR.setPower(-.90);
         isLiftMoving = true; 
     }
 
     void contractLift() {
         liftL.setPower(-.85);
         liftR.setPower(.85);
+        hangerL.setPower(-.90);
+        hangerR.setPower(.90);
         isLiftMoving = true; 
     }
 
     void stopLift() {
         liftL.setPower(0);
         liftR.setPower(0);
+        hangerL.setPower(0);
+        hangerR.setPower(0);
         isLiftMoving = false;
+    }
+    
+    void raiseHooks() {
+        hangingServoL.setPosition(0.65);
+        //hangingServoR.setPosition(0);
+    }
+    
+    void lowerHooks() {
+        hangingServoL.setPosition(0.1);
+        //hangingServoR.setPosition(-1);
     }
 
     double getDistance() {
