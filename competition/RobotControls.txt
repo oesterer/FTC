@@ -17,7 +17,8 @@ left_bumper   raise hangers (with slack)
 right_stick_y drive
 right_stick_x strafe
 left_stick_x  turn
-right_bumper  move slower
+right_bumper  move 2x
+left_bumper   move 3x
 
 dpad_right    turn 90 (15 with right_bumper) (disabled as of 1/16)
 dpad_left     turn 90 (15 with right_bumper) (disabled as of 1/16)
