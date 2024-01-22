@@ -1,11 +1,23 @@
 package org.firstinspires.ftc.teamcode;
-//https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
-import com.qualcomm.robotcore.eventloop.opmode.*;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.*;
+
+import java.util.List;
+    
+import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraCharacteristics;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import com.qualcomm.robotcore.hardware.*;
-import java.util.List;
 
 @TeleOp(name="DriveRobot", group ="Concept")
 public class DriveRobot extends LinearOpMode
@@ -19,75 +31,80 @@ public class DriveRobot extends LinearOpMode
     DcMotor    motor2   = null;
     DcMotor    motor3   = null;
     DcMotor    motor4   = null;
-    DcMotor    hangerL  = null;
-    DcMotor    hangerR  = null;
     Servo      launcher = null;
-    Servo      claw    = null;
+    Servo      claw1    = null;
+    Servo      claw2    = null;
     Servo      wrist    = null;
-    Servo      hangingServoL = null;
-    //Servo      hangingServoR = null;
     DcMotor    liftR    = null;
     DcMotor    liftL    = null;
+    DcMotor    motorTest   = null;
     boolean    isLiftMoving = false;
-    boolean    isHangerMoving = false;
     boolean    isPlaneLaunched = false;  
     boolean    wristUp=false;
-    boolean    wristHigh=false;
     boolean    clawClosed=false;
-    String     wristStatus="void";
-    String     clawStatus="void";
-    String     hangingStatus="void";
-    String     action="void";
+    ColorSensor    colorSensor = null;
     DistanceSensor distanceSensor = null;
-    DistanceSensor distanceSensorL = null;
-    DistanceSensor distanceSensorR = null;
-    IMU imu = null;
- 
-    void initRobot() {
+
+    /**
+     * The variable to store our instance of the TensorFlow Object Detection processor.
+     */
+    TfodProcessor tfod;
+
+    /**
+     * The variable to store our instance of the vision portal.
+     */
+    VisionPortal visionPortal;
+    IMU imu;
+    int logoFacingDirectionPosition;
+    int usbFacingDirectionPosition;
+    boolean orientationIsValid = true;
+    static RevHubOrientationOnRobot.LogoFacingDirection[] logoFacingDirections
+            = RevHubOrientationOnRobot.LogoFacingDirection.values();
+    static RevHubOrientationOnRobot.UsbFacingDirection[] usbFacingDirections
+            = RevHubOrientationOnRobot.UsbFacingDirection.values();
+
+    void init() {
         imu = hardwareMap.get(IMU.class, "imu");
+        logoFacingDirectionPosition = 0; // Up
+        usbFacingDirectionPosition = 2; // Forward
+
+        updateOrientation();
+        
+        initTfod();
         
         motor1  = hardwareMap.get(DcMotor.class, "motor1");
         motor2  = hardwareMap.get(DcMotor.class, "motor2");
         motor3  = hardwareMap.get(DcMotor.class, "motor3");
         motor4  = hardwareMap.get(DcMotor.class, "motor4");
-        hangerL  = hardwareMap.get(DcMotor.class, "hangerL");
-        hangerR  = hardwareMap.get(DcMotor.class, "hangerR");
         motors[0]=(motor1);
         motors[1]=(motor2);
         motors[2]=(motor3);
         motors[3]=(motor4);
 
         launcher = hardwareMap.get(Servo.class, "launcher");
-        claw    = hardwareMap.get(Servo.class, "claw");
-      
+        claw1    = hardwareMap.get(Servo.class, "claw1");
+        claw2    = hardwareMap.get(Servo.class, "claw2");
         wrist    = hardwareMap.get(Servo.class, "wrist");
-
-        hangingServoL   = hardwareMap.get(Servo.class, "hangingServoL");
-        //hangingServoR   = hardwareMap.get(Servo.class, "hangingServoR");
-        
         liftR    = hardwareMap.get(DcMotor.class, "liftR");
         liftL    = hardwareMap.get(DcMotor.class, "liftL");
+        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
         distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
-        distanceSensorL = hardwareMap.get(DistanceSensor.class, "distanceSensorL");
-        distanceSensorR = hardwareMap.get(DistanceSensor.class, "distanceSensorR");
 
         motor1.setDirection(DcMotor.Direction.REVERSE);
         motor2.setDirection(DcMotor.Direction.FORWARD);
         motor3.setDirection(DcMotor.Direction.REVERSE);
         motor4.setDirection(DcMotor.Direction.FORWARD);
 
-        // Move drone servo to loaded position
-        loadDrone();
+        telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
 
-        telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
         telemetry.addData(">", "Press Start");
         telemetry.update();        
     }
 
     @Override public void runOpMode() throws InterruptedException {
-        initRobot();
+        init();
         waitForStart();
-        
+
         while (opModeIsActive())
         {
             double motor1Power = 0;
@@ -99,9 +116,9 @@ public class DriveRobot extends LinearOpMode
             double sideScale=1;
             double turnScale=0.75;
 
-            double driveInput = gamepad1.left_stick_y;
-            double sideInput  = gamepad1.left_stick_x;
-            double turnInput  = gamepad1.right_stick_x;
+            double driveInput = gamepad1.right_stick_y;
+            double sideInput  = gamepad1.right_stick_x;
+            double turnInput  = gamepad1.left_stick_x;
 
             motor1Power = driveScale*driveInput
                           +sideScale*sideInput
@@ -115,9 +132,9 @@ public class DriveRobot extends LinearOpMode
             motor4Power = driveScale*driveInput
                           +sideScale*sideInput
                           -turnScale*turnInput;
-            double scale = 1;
+            double scale = 3;
             if (!gamepad1.right_bumper) {
-                scale = 3.0;
+                scale = 1.0;
             }
             
             scale=Math.abs(motor1Power)>scale?Math.abs(motor1Power):scale;
@@ -129,42 +146,32 @@ public class DriveRobot extends LinearOpMode
             motor2.setPower(motor2Power/scale);
             motor3.setPower(motor3Power/scale);
             motor4.setPower(motor4Power/scale);
-            
-            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-            
-            telemetry.addLine("==HEADS_UP==");
-            telemetry.addLine();
-            
-            telemetry.addData("ACTION", action);
-            telemetry.addData("HEADING", "%.2f Deg.", orientation.getYaw(AngleUnit.DEGREES));
-            telemetry.addData("WRIST", wristStatus);
-            telemetry.addData("CLAW", clawStatus);
-            telemetry.addData("HANGING", hangingStatus);
-            
-            telemetry.addLine();
-            telemetry.addLine("==DIAGNOSTICS==");
-            telemetry.addLine();
 
             telemetry.addData("motor1", motor1Power/scale);
             telemetry.addData("motor2", motor2Power/scale);
             telemetry.addData("motor3", motor3Power/scale);
             telemetry.addData("motor4", motor4Power/scale);
             
+            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
-            telemetry.addData("claw", Math.round(claw.getPosition()*1000) + " (" + clawStatus + ")");
-            telemetry.addData("wrist", Math.round(wrist.getPosition()*1000) + " (" + wristStatus + ")");
-            telemetry.addData("hanging servos", Math.round(hangingServoL.getPosition()*1000) + " (" + hangingStatus + ")");
+            //telemetry.addData("driveInput", driveInput);
+            //telemetry.addData("sideInput",  sideInput);
+            //telemetry.addData("turnInput",  turnInput);
+            //telemetry.addData("Plane Launched", isPlaneLaunched);
+            telemetry.addData("colorSensor", "r:"+ colorSensor.red() +" g:"+ colorSensor.green() +" b:"+ colorSensor.blue());
             telemetry.addData("distance", getDistance());
-            telemetry.addData("distanceL", getDistanceL());
-            telemetry.addData("distanceR", getDistanceR());
 
-          /*  if(gamepad1.dpad_right) {
+            if(gamepad1.dpad_right) {
                 if(gamepad1.right_bumper) {
                     turn(-15);
                 } else {
                     turn(-90);
                 }
+            }
+
+            if(gamepad1.left_bumper) {
+                square(100);
             }
 
             if(gamepad1.dpad_left) {
@@ -174,152 +181,97 @@ public class DriveRobot extends LinearOpMode
                     turn(90);
                 }
             }
-            */
 
-            if(gamepad2.dpad_up){
+            if(gamepad1.dpad_up && launcher.getPosition() == 1){
                 launchDrone();
-                sleep(1000);
+                telemetry.addData("Action", "Launch Drone");
+            } else if(gamepad1.dpad_up){
                 loadDrone();
-                action="FIRING DRONE";
+                telemetry.addData("Action", "Load Drone");
             }
-
-            if(gamepad1.a){
-                hangerDown();
-            }
-            if(gamepad1.b){
-                hangerRaise();
-            }
-
-            if (gamepad1.dpad_down) {
-                turn(180);
-                sleep(200);
-            }
-
-            //if (gamepad1.a) {
-            //        strafe(-130+getDistanceR());
-            //}
-            if(gamepad1.dpad_up){
-                extendLift();
-                sleep(1000);
-                stopLift();
-                driveToDistance(300);
-                wristDown();
-                release();
-                drive(-70);
-                contractLift();
-                sleep(1000);
-                stopLift();
-            }
-
-            if(gamepad2.b) {
+            
+            if(gamepad1.b) {
                 if(clawClosed) {
                     release();
                     clawClosed=false;
-                    clawStatus="Claw Open";
-                    action="OPEN CLAW";
+                    telemetry.addData("Action", "Release Claw");
                 } else {
                     grab();
                     clawClosed=true;
-                    clawStatus="Claw Holding";
-                    action="CLOSE CLAW";
+                    telemetry.addData("Action", "Close Claw");
                 }
                 sleep(500);
-            }
-            
-            if(gamepad2.y) {
-                if(Math.floor(wrist.getPosition()*1000) == 360) {
-                    wristDown();
-                    wristStatus="Wrist to Ground";
-                    action="WRIST GROUNDED";
-                } else {
-                    wristUp();
-                    wristStatus="Wrist to Board Angle";
-                    action="WRIST TO BOARD";
-                }
-                sleep(500);
-            }
-            
-            if(gamepad2.x) {
-                if(!(Math.floor(wrist.getPosition()*1000) == 0)) {
-                    wristHigh();
-                    wristStatus="Wrist Up";
-                    action="WRIST UP";
-                } else {
-                    wristUp();
-                    wristStatus="Wrist to Board Angle";
-                    action="WRIST TO BOARD";
-                }
-                sleep(500);
-            }
-            
-            if(gamepad2.right_trigger>0.1) {
-                extendLift();
-                action="LIFT EXPAND";
             }
 
-            if(gamepad2.left_trigger>0.1) {
+            if(gamepad1.y) {
+                if(wristUp) {
+                    wristDown();
+                    wristUp=false;
+                    telemetry.addData("Action", "Wrist Down");
+                } else {
+                    wristUp();
+                    wristUp=true;
+                    telemetry.addData("Action", "Wrist Up");
+                }
+                sleep(500);
+            }
+            
+
+            if(gamepad1.right_trigger>0.1) {
+                extendLift();
+                telemetry.addData("Action", "Lift Extend");
+            }
+
+            if(gamepad1.left_trigger>0.1) {
                 contractLift();
-                action="LIFT CONTRACT";
+                telemetry.addData("Action", "Lift Contract");
             }
 
             if(isLiftMoving &&    
-               gamepad2.left_trigger<=0.1 &&
-               gamepad2.right_trigger<=0.1) {
+               gamepad1.left_trigger<=0.1 &&
+               gamepad1.right_trigger<=0.1) {
                stopLift();
-               action="LIFT STOP";
+               telemetry.addData("Action", "Lift Stop");
             }
 
-            if(isHangerMoving &&
-            !gamepad1.a &&
-            !gamepad1.b) {
-               stopHanger();
+            if(gamepad1.x) {
+                auto();
             }
 
-            if(gamepad2.left_bumper) {
-                raiseHooks();
-                action="HOOKS RAISED";
-                hangingStatus="Hooks Raised";
+            if(gamepad1.a) {
+                driveToDistance(300);
             }
 
-            if(gamepad2.right_bumper) {
-                lowerHooks();
-                action="HOOKS LOWERED";
-                hangingStatus="Hooks Lowered";
-            }
-
-
-
+            telemetryTfod();
             telemetry.update();
-            action="NONE";
             sleep(10);
         }
     }
 
-    void release() {
-        claw.setPosition(0.5);
-        
+    void grab() {
+        claw1.setPosition(0.75);
+        claw2.setPosition(0.4);
     }
 
-    void grab() {
-        claw.setPosition(1);
-        
+    void release() {
+        claw1.setPosition(0.4);
+        claw2.setPosition(0.75);
     }
 
     void wristUp() {
-        wrist.setPosition(0.36);
+        wrist.setPosition(0.35);
     }
 
     void wristDown() {
-        wrist.setPosition(0.625);
+        wrist.setPosition(1);
     }
-    
-    void wristHigh() {
-        wrist.setPosition(0);
+
+    void wristHalfway() {
+        wrist.setPosition(0.85);
     }
-    
+
     void turn(int angle) {
         imu.resetYaw();
-        sleep(50);
         double currentAngle=getAngle();
         int direction=0;
         double targetAngle=currentAngle+angle;
@@ -339,14 +291,6 @@ public class DriveRobot extends LinearOpMode
             motor3.setPower(-1*direction*power);
             motor4.setPower(1*direction*power);
             currentAngle=getAngle();
-
-            // Adjust angle for angles greater than 180 or less than -180
-            if(direction>0 && currentAngle<-10) {
-                currentAngle=360+currentAngle;
-            } else if(direction<0 && currentAngle>10) {
-                currentAngle=-360+currentAngle;
-            }
-            
             remainingAngle=Math.abs(targetAngle-currentAngle);
         } 
 
@@ -380,11 +324,11 @@ public class DriveRobot extends LinearOpMode
 
     double getDrivePower(double remainingDistance) {
         // What power to use to drive the robot
-        final double DRIVE_POWER=0.6;
+        final double DRIVE_POWER=1;
         // What power to use to drive the robot
         final double MIN_POWER=0.1;
         // Deceleration distance
-        final double DECEL_DIST=800.0;
+        final double DECEL_DIST=200.0;
 
         if(remainingDistance>=DECEL_DIST) {
             return DRIVE_POWER;
@@ -395,80 +339,39 @@ public class DriveRobot extends LinearOpMode
 
     double getAngle() {
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        return orientation.getYaw(AngleUnit.DEGREES);
+        return(orientation.getYaw(AngleUnit.DEGREES));
     }
 
     void loadDrone() {
-        launcher.setPosition(0.35);
+        launcher.setPosition(1);
     }
 
     void launchDrone() {
-        launcher.setPosition(0.25);
+        launcher.setPosition(0);
         isPlaneLaunched = true;
+        sleep(1000);
     }
-
-    void hangerDown() {
-        hangerL.setPower(.3);
-        hangerR.setPower(-.3);
-        isHangerMoving = true; 
-    }
-
-    void hangerRaise() {
-        hangerL.setPower(-.75);
-        hangerR.setPower(.75);
-        isHangerMoving = true; 
-
-    }
-
-     void stopHanger() {
-        hangerL.setPower(0);
-        hangerR.setPower(0);
-        isHangerMoving = false;
-    }
-
 
     void extendLift() {
         liftL.setPower(.85);
         liftR.setPower(-.85);
-        hangerL.setPower(.90);
-        hangerR.setPower(-.90);
         isLiftMoving = true; 
     }
 
     void contractLift() {
         liftL.setPower(-.85);
         liftR.setPower(.85);
-        hangerL.setPower(-.90);
-        hangerR.setPower(.90);
         isLiftMoving = true; 
     }
 
     void stopLift() {
         liftL.setPower(0);
         liftR.setPower(0);
-        hangerL.setPower(0);
-        hangerR.setPower(0);
         isLiftMoving = false;
-    }
-    
-    void raiseHooks() {
-        hangingServoL.setPosition(0.65);
-        //hangingServoR.setPosition(0);
-    }
-    
-    void lowerHooks() {
-        hangingServoL.setPosition(0.1);
-        //hangingServoR.setPosition(-1);
     }
 
     double getDistance() {
         return distanceSensor.getDistance(DistanceUnit.MM);
-    }   
-    int getDistanceL() {
-        return (int)distanceSensorL.getDistance(DistanceUnit.MM);
-    }   
-    int getDistanceR() {
-        return (int)distanceSensorR.getDistance(DistanceUnit.MM);
     }   
 
     boolean seeBlock(int distance) {
@@ -498,13 +401,12 @@ public class DriveRobot extends LinearOpMode
         for(DcMotor motor : motors) {
             // Stop and reset the motor counter
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            // Set the target position by converting the distance into motor
-            // position values
-            motor.setTargetPosition(targetPosition);       
             // Set the motor into the mode that uses the encoder to keep
             // track of the position
             motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                 
+            // Set the target position by converting the distance into motor
+            // position values
+            motor.setTargetPosition(targetPosition);            
         }
         
         telemetry.addData("motor1",motor1.getCurrentPosition());
@@ -517,14 +419,8 @@ public class DriveRobot extends LinearOpMode
         do {
 
             int currentPosition=motor1.getCurrentPosition();
-            telemetry.addData("motor1", currentPosition);
-            
-            YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-            
-            telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
-            telemetry.addData("distance", getDistance());
-            telemetry.addData("distanceL", getDistanceL());
-            telemetry.addData("distanceR", getDistanceR());
+            telemetry.addData("motor1",currentPosition);
+            telemetry.update();
     
             // Determine the closest distance to either starting position
             // or target. When close to start, we accelerate, when close to 
@@ -644,4 +540,132 @@ public class DriveRobot extends LinearOpMode
             motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }        
     } 
+
+
+    /**
+     * Initialize the TensorFlow Object Detection processor.
+     */
+    void initTfod() {
+
+        // Create the TensorFlow processor by using a builder.
+        tfod = new TfodProcessor.Builder()
+
+            // Use setModelAssetName() if the TF Model is built in as an asset.
+            // Use setModelFileName() if you have downloaded a custom team model to the Robot Controller.
+            //.setModelAssetName(TFOD_MODEL_ASSET)
+            //.setModelFileName(TFOD_MODEL_FILE)
+
+            //.setModelLabels(LABELS)
+            //.setIsModelTensorFlow2(true)
+            //.setIsModelQuantized(true)
+            //.setModelInputSize(300)
+            //.setModelAspectRatio(16.0 / 9.0)
+
+            .build();
+
+        // Create the vision portal by using a builder.
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+
+        // Set the camera (webcam vs. built-in RC phone camera).
+        //if (USE_WEBCAM) {
+            builder.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"));
+        //} else {
+        //    builder.setCamera(BuiltinCameraDirection.BACK);
+        //}
+
+        // Choose a camera resolution. Not all cameras support all resolutions.
+        //builder.setCameraResolution(new Size(640, 480));
+
+        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
+        //builder.enableCameraMonitoring(true);
+
+        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
+        //builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
+        // Choose whether or not LiveView stops if no processors are enabled.
+        // If set "true", monitor shows solid orange screen if no processors enabled.
+        // If set "false", monitor shows camera view without annotations.
+        //builder.setAutoStopLiveView(false);
+
+        // Set and enable the processor.
+        builder.addProcessor(tfod);
+
+        // Build the Vision Portal, using the above settings.
+        visionPortal = builder.build();
+
+        // Set confidence threshold for TFOD recognitions, at any time.
+        //tfod.setMinResultConfidence(0.75f);
+
+        // Disable or re-enable the TFOD processor at any time.
+        //visionPortal.setProcessorEnabled(tfod, true);
+
+    }   // end method initTfod()
+
+    /**
+     * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
+     */
+    void telemetryTfod() {
+
+        List<Recognition> currentRecognitions = tfod.getRecognitions();
+        telemetry.addData("# Objects Detected", currentRecognitions.size());
+
+        // Step through the list of recognitions and display info for each one.
+        for (Recognition recognition : currentRecognitions) {
+            double x = (recognition.getLeft() + recognition.getRight()) / 2 ;
+            double y = (recognition.getTop()  + recognition.getBottom()) / 2 ;
+
+            telemetry.addData(""," ");
+            telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
+            telemetry.addData("- Position", "%.0f / %.0f", x, y);
+            telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
+        }   // end for() loop
+
+    }   // end method telemetryTfod()
+    void updateOrientation() {
+        RevHubOrientationOnRobot.LogoFacingDirection logo = logoFacingDirections[logoFacingDirectionPosition];
+        RevHubOrientationOnRobot.UsbFacingDirection usb = usbFacingDirections[usbFacingDirectionPosition];
+        try {
+            RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logo, usb);
+            imu.initialize(new IMU.Parameters(orientationOnRobot));
+            orientationIsValid = true;
+        } catch (IllegalArgumentException e) {
+            orientationIsValid = false;
+        }
+    }
+
+    void auto() {
+        if(seeBlock(900)){
+            strafe(100);
+            drive(740);/* At position 2 now (the one directly in front of start)*/
+            drive(-200);
+            park(-540, 0, 90);
+        }else{
+            strafe(320);
+            if(seeBlock(800)){
+                drive(550);/* At the edge of position 1 now */
+                drive(-200);
+                park(-340, 0, 90);
+            }else{
+                drive(590);
+                turn(90);
+                drive(440); /* at pos 3 now */
+                drive(-200);
+                park(0, -700,0);
+            }
+        }
+    }
+
+    void park(int driveDistance, int strafeDistance, int turnAmount) {
+        drive(driveDistance);
+        strafe(strafeDistance);
+        if(turnAmount>0)turn(turnAmount);
+        drive(2300);
+    }
+    
+    void square(int distance) {
+        for (int i=0;i<4;i++) {
+            drive(distance);
+            turn(90);
+        }
+    }
 }

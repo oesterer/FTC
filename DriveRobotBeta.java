@@ -1,14 +1,33 @@
+/* 
+ * Modified version of TeleOp for secondary Robot
+ * Copied from FTC/competition/DriveRobot.java on 1/7/24 16:39 PST
+ */
+
+
 package org.firstinspires.ftc.teamcode;
 //https://www.youtube.com/watch?v=dQw4w9WgXcQ
 
-import com.qualcomm.robotcore.eventloop.opmode.*;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.*;
+
+import java.util.List;
+    
+import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraCharacteristics;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import com.qualcomm.robotcore.hardware.*;
-import java.util.List;
 
-@TeleOp(name="DriveRobot", group ="Concept")
-public class DriveRobot extends LinearOpMode
+@TeleOp(name="DriveRobotBeta", group ="Concept")
+public class DriveRobotBeta extends LinearOpMode
 {
     // Array to hold all 4 motors, this can be use in loops
     // such at this  " for(DcMotor motor : motors) {} " to execute 
@@ -19,28 +38,6 @@ public class DriveRobot extends LinearOpMode
     DcMotor    motor2   = null;
     DcMotor    motor3   = null;
     DcMotor    motor4   = null;
-    DcMotor    hangerL  = null;
-    DcMotor    hangerR  = null;
-    Servo      launcher = null;
-    Servo      claw    = null;
-    Servo      wrist    = null;
-    Servo      hangingServoL = null;
-    //Servo      hangingServoR = null;
-    DcMotor    liftR    = null;
-    DcMotor    liftL    = null;
-    boolean    isLiftMoving = false;
-    boolean    isHangerMoving = false;
-    boolean    isPlaneLaunched = false;  
-    boolean    wristUp=false;
-    boolean    wristHigh=false;
-    boolean    clawClosed=false;
-    String     wristStatus="void";
-    String     clawStatus="void";
-    String     hangingStatus="void";
-    String     action="void";
-    DistanceSensor distanceSensor = null;
-    DistanceSensor distanceSensorL = null;
-    DistanceSensor distanceSensorR = null;
     IMU imu = null;
  
     void initRobot() {
@@ -50,26 +47,10 @@ public class DriveRobot extends LinearOpMode
         motor2  = hardwareMap.get(DcMotor.class, "motor2");
         motor3  = hardwareMap.get(DcMotor.class, "motor3");
         motor4  = hardwareMap.get(DcMotor.class, "motor4");
-        hangerL  = hardwareMap.get(DcMotor.class, "hangerL");
-        hangerR  = hardwareMap.get(DcMotor.class, "hangerR");
         motors[0]=(motor1);
         motors[1]=(motor2);
         motors[2]=(motor3);
         motors[3]=(motor4);
-
-        launcher = hardwareMap.get(Servo.class, "launcher");
-        claw    = hardwareMap.get(Servo.class, "claw");
-      
-        wrist    = hardwareMap.get(Servo.class, "wrist");
-
-        hangingServoL   = hardwareMap.get(Servo.class, "hangingServoL");
-        //hangingServoR   = hardwareMap.get(Servo.class, "hangingServoR");
-        
-        liftR    = hardwareMap.get(DcMotor.class, "liftR");
-        liftL    = hardwareMap.get(DcMotor.class, "liftL");
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceSensor");
-        distanceSensorL = hardwareMap.get(DistanceSensor.class, "distanceSensorL");
-        distanceSensorR = hardwareMap.get(DistanceSensor.class, "distanceSensorR");
 
         motor1.setDirection(DcMotor.Direction.REVERSE);
         motor2.setDirection(DcMotor.Direction.FORWARD);
@@ -131,19 +112,6 @@ public class DriveRobot extends LinearOpMode
             motor4.setPower(motor4Power/scale);
             
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-            
-            telemetry.addLine("==HEADS_UP==");
-            telemetry.addLine();
-            
-            telemetry.addData("ACTION", action);
-            telemetry.addData("HEADING", "%.2f Deg.", orientation.getYaw(AngleUnit.DEGREES));
-            telemetry.addData("WRIST", wristStatus);
-            telemetry.addData("CLAW", clawStatus);
-            telemetry.addData("HANGING", hangingStatus);
-            
-            telemetry.addLine();
-            telemetry.addLine("==DIAGNOSTICS==");
-            telemetry.addLine();
 
             telemetry.addData("motor1", motor1Power/scale);
             telemetry.addData("motor2", motor2Power/scale);
@@ -152,171 +120,13 @@ public class DriveRobot extends LinearOpMode
             
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
-            telemetry.addData("claw", Math.round(claw.getPosition()*1000) + " (" + clawStatus + ")");
-            telemetry.addData("wrist", Math.round(wrist.getPosition()*1000) + " (" + wristStatus + ")");
-            telemetry.addData("hanging servos", Math.round(hangingServoL.getPosition()*1000) + " (" + hangingStatus + ")");
-            telemetry.addData("distance", getDistance());
-            telemetry.addData("distanceL", getDistanceL());
-            telemetry.addData("distanceR", getDistanceR());
-
-          /*  if(gamepad1.dpad_right) {
-                if(gamepad1.right_bumper) {
-                    turn(-15);
-                } else {
-                    turn(-90);
-                }
-            }
-
-            if(gamepad1.dpad_left) {
-                if(gamepad1.right_bumper) {
-                    turn(15);
-                } else {
-                    turn(90);
-                }
-            }
-            */
-
-            if(gamepad2.dpad_up){
-                launchDrone();
-                sleep(1000);
-                loadDrone();
-                action="FIRING DRONE";
-            }
-
-            if(gamepad1.a){
-                hangerDown();
-            }
-            if(gamepad1.b){
-                hangerRaise();
-            }
-
-            if (gamepad1.dpad_down) {
-                turn(180);
-                sleep(200);
-            }
-
-            //if (gamepad1.a) {
-            //        strafe(-130+getDistanceR());
-            //}
-            if(gamepad1.dpad_up){
-                extendLift();
-                sleep(1000);
-                stopLift();
-                driveToDistance(300);
-                wristDown();
-                release();
-                drive(-70);
-                contractLift();
-                sleep(1000);
-                stopLift();
-            }
-
-            if(gamepad2.b) {
-                if(clawClosed) {
-                    release();
-                    clawClosed=false;
-                    clawStatus="Claw Open";
-                    action="OPEN CLAW";
-                } else {
-                    grab();
-                    clawClosed=true;
-                    clawStatus="Claw Holding";
-                    action="CLOSE CLAW";
-                }
-                sleep(500);
-            }
             
-            if(gamepad2.y) {
-                if(Math.floor(wrist.getPosition()*1000) == 360) {
-                    wristDown();
-                    wristStatus="Wrist to Ground";
-                    action="WRIST GROUNDED";
-                } else {
-                    wristUp();
-                    wristStatus="Wrist to Board Angle";
-                    action="WRIST TO BOARD";
-                }
-                sleep(500);
-            }
-            
-            if(gamepad2.x) {
-                if(!(Math.floor(wrist.getPosition()*1000) == 0)) {
-                    wristHigh();
-                    wristStatus="Wrist Up";
-                    action="WRIST UP";
-                } else {
-                    wristUp();
-                    wristStatus="Wrist to Board Angle";
-                    action="WRIST TO BOARD";
-                }
-                sleep(500);
-            }
-            
-            if(gamepad2.right_trigger>0.1) {
-                extendLift();
-                action="LIFT EXPAND";
-            }
-
-            if(gamepad2.left_trigger>0.1) {
-                contractLift();
-                action="LIFT CONTRACT";
-            }
-
-            if(isLiftMoving &&    
-               gamepad2.left_trigger<=0.1 &&
-               gamepad2.right_trigger<=0.1) {
-               stopLift();
-               action="LIFT STOP";
-            }
-
-            if(isHangerMoving &&
-            !gamepad1.a &&
-            !gamepad1.b) {
-               stopHanger();
-            }
-
-            if(gamepad2.left_bumper) {
-                raiseHooks();
-                action="HOOKS RAISED";
-                hangingStatus="Hooks Raised";
-            }
-
-            if(gamepad2.right_bumper) {
-                lowerHooks();
-                action="HOOKS LOWERED";
-                hangingStatus="Hooks Lowered";
-            }
-
-
-
             telemetry.update();
             action="NONE";
             sleep(10);
         }
     }
 
-    void release() {
-        claw.setPosition(0.5);
-        
-    }
-
-    void grab() {
-        claw.setPosition(1);
-        
-    }
-
-    void wristUp() {
-        wrist.setPosition(0.36);
-    }
-
-    void wristDown() {
-        wrist.setPosition(0.625);
-    }
-    
-    void wristHigh() {
-        wrist.setPosition(0);
-    }
-    
     void turn(int angle) {
         imu.resetYaw();
         sleep(50);
@@ -398,68 +208,6 @@ public class DriveRobot extends LinearOpMode
         return orientation.getYaw(AngleUnit.DEGREES);
     }
 
-    void loadDrone() {
-        launcher.setPosition(0.35);
-    }
-
-    void launchDrone() {
-        launcher.setPosition(0.25);
-        isPlaneLaunched = true;
-    }
-
-    void hangerDown() {
-        hangerL.setPower(.3);
-        hangerR.setPower(-.3);
-        isHangerMoving = true; 
-    }
-
-    void hangerRaise() {
-        hangerL.setPower(-.75);
-        hangerR.setPower(.75);
-        isHangerMoving = true; 
-
-    }
-
-     void stopHanger() {
-        hangerL.setPower(0);
-        hangerR.setPower(0);
-        isHangerMoving = false;
-    }
-
-
-    void extendLift() {
-        liftL.setPower(.85);
-        liftR.setPower(-.85);
-        hangerL.setPower(.90);
-        hangerR.setPower(-.90);
-        isLiftMoving = true; 
-    }
-
-    void contractLift() {
-        liftL.setPower(-.85);
-        liftR.setPower(.85);
-        hangerL.setPower(-.90);
-        hangerR.setPower(.90);
-        isLiftMoving = true; 
-    }
-
-    void stopLift() {
-        liftL.setPower(0);
-        liftR.setPower(0);
-        hangerL.setPower(0);
-        hangerR.setPower(0);
-        isLiftMoving = false;
-    }
-    
-    void raiseHooks() {
-        hangingServoL.setPosition(0.65);
-        //hangingServoR.setPosition(0);
-    }
-    
-    void lowerHooks() {
-        hangingServoL.setPosition(0.1);
-        //hangingServoR.setPosition(-1);
-    }
 
     double getDistance() {
         return distanceSensor.getDistance(DistanceUnit.MM);
@@ -560,6 +308,17 @@ public class DriveRobot extends LinearOpMode
             motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }        
     } 
+
+
+    public class testRunner {
+        
+        void square(int distance) {
+            for (int i = 0; i < 4; i++) {
+                drive(distance);
+                turn(90);
+            }
+        }
+    }
 
     public void strafe(int distance) {
         // Constants to use when driving the robot
