@@ -22,10 +22,10 @@ public class DriveRobot extends LinearOpMode
     DcMotor    hangerL  = null;
     DcMotor    hangerR  = null;
     Servo      launcher = null;
-    Servo      claw    = null;
+    Servo      claw     = null;
     Servo      wrist    = null;
-    Servo      hangingServoL = null;
-    //Servo      hangingServoR = null;
+    CRServo    scissorL = null;
+    CRServo    scissorR = null;
     DcMotor    liftR    = null;
     DcMotor    liftL    = null;
     boolean    isLiftMoving = false;
@@ -62,8 +62,8 @@ public class DriveRobot extends LinearOpMode
       
         wrist    = hardwareMap.get(Servo.class, "wrist");
 
-        hangingServoL   = hardwareMap.get(Servo.class, "hangingServoL");
-        //hangingServoR   = hardwareMap.get(Servo.class, "hangingServoR");
+        scissorL   = hardwareMap.get(CRServo.class, "scissorL");
+        scissorR   = hardwareMap.get(CRServo.class, "scissorR");
         
         liftR    = hardwareMap.get(DcMotor.class, "liftR");
         liftL    = hardwareMap.get(DcMotor.class, "liftL");
@@ -157,7 +157,6 @@ public class DriveRobot extends LinearOpMode
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("claw", Math.round(claw.getPosition()*1000) + " (" + clawStatus + ")");
             telemetry.addData("wrist", Math.round(wrist.getPosition()*1000) + " (" + wristStatus + ")");
-            telemetry.addData("hanging servos", Math.round(hangingServoL.getPosition()*1000) + " (" + hangingStatus + ")");
             telemetry.addData("distance", getDistance());
             telemetry.addData("distanceL", getDistanceL());
             telemetry.addData("distanceR", getDistanceR());
@@ -198,9 +197,6 @@ public class DriveRobot extends LinearOpMode
                 sleep(200);
             }
 
-            //if (gamepad1.a) {
-            //        strafe(-130+getDistanceR());
-            //}
             if(gamepad1.dpad_up){
                 extendLift();
                 sleep(1000);
@@ -246,6 +242,14 @@ public class DriveRobot extends LinearOpMode
                 liftPixel();
             }
             
+            if(gamepad2.right_bumper) {
+                raiseHooks();
+            }
+            
+            if(gamepad2.left_bumper) {
+                lowerHooks();
+            }
+            
             if(gamepad2.x) {
                 if(!(Math.floor(wrist.getPosition()*1000) == 0)) {
                     wristHigh();
@@ -282,29 +286,6 @@ public class DriveRobot extends LinearOpMode
                stopHanger();
             }
 
-            if(gamepad2.left_bumper) {
-               hangerL.setPower(-.75);
-               hangerR.setPower(.75);
-               sleep(4000);
-               hangerL.setPower(0);
-               hangerR.setPower(0);
-               raiseHooks();
-               action="HOOKS RAISED";
-               hangingStatus="Hooks Raised";
-            }
-
-            if(gamepad2.right_bumper) {
-                lowerHooks();
-                sleep(1000);
-                hangerL.setPower(.75);
-               hangerR.setPower(-.75);
-               sleep(3500);
-               hangerL.setPower(0);
-               hangerR.setPower(0);
-               action="HOOKS LOWERED";
-               hangingStatus="Hooks Lowered";
-            }
-
             telemetry.update();
             action="NONE";
             sleep(10);
@@ -333,7 +314,23 @@ public class DriveRobot extends LinearOpMode
         wrist.setPosition(0);
     }
     
+    void raiseHooks() {
+        scissorL.setPower(-1);
+        scissorR.setPower(-1);
+        sleep(200);
+        scissorL.setPower(0);
+        scissorR.setPower(0);
+        
+    }
     
+    void lowerHooks() {
+        scissorL.setPower(1);
+        scissorR.setPower(1);
+        sleep(200);
+        scissorL.setPower(0);
+        scissorR.setPower(0);
+        
+    }
 
     void loadDrone() {
         launcher.setPosition(0.35);
@@ -411,15 +408,6 @@ public class DriveRobot extends LinearOpMode
         stopLift();
     }
     
-    void raiseHooks() {
-        hangingServoL.setPosition(0.65);
-        //hangingServoR.setPosition(0);
-    }
-    
-    void lowerHooks() {
-        hangingServoL.setPosition(0.1);
-        //hangingServoR.setPosition(-1);
-    }
 
     double getDistance() {
         return distanceSensor.getDistance(DistanceUnit.MM);
@@ -479,40 +467,8 @@ public class DriveRobot extends LinearOpMode
 
             int currentPosition=motor1.getCurrentPosition();
             telemetry.addData("motor1", currentPosition);
-            if (randomization == 1) {
-                telemetry.addLine(" -------");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine("   1   |");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine(" ---X---");
-            } else if (randomization == 2) {
-                telemetry.addLine(" -------");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine("   2   X");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine(" -------");
-            } else if (randomization == 3) {
-                telemetry.addLine(" ---X---");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine("   3   |");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine(" -------");
-            } else {
-                telemetry.addLine(" -------");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine("   ?   |");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine(" -------");
-            }
-            
+            telemetry.addData("randomization",randomization);
+
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
             
             telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
@@ -682,39 +638,7 @@ public class DriveRobot extends LinearOpMode
 
             int currentPosition=motor1.getCurrentPosition();
             telemetry.addData("motor1",currentPosition);
-            if (randomization == 1) {
-                telemetry.addLine(" -------");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine("   1   |");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine(" ---X---");
-            } else if (randomization == 2) {
-                telemetry.addLine(" -------");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine("   2   X");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine(" -------");
-            } else if (randomization == 3) {
-                telemetry.addLine(" ---X---");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine("   3   |");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine(" -------");
-            } else {
-                telemetry.addLine(" -------");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine("   ?   |");
-                telemetry.addLine("       |");
-                telemetry.addLine("       |");
-                telemetry.addLine(" -------");
-            }
+            telemetry.addData("randomization",randomization);
             
             YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
             
